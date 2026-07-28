@@ -1,0 +1,69 @@
+{
+  "skill_name": "specify",
+  "evals": [
+    {
+      "id": 1,
+      "name": "presupuesto-mensual-respeta-gate",
+      "prompt": "Quiero que la app me deje ponerle un presupuesto mensual a cada categoría de gasto, y que me avise cuando un gasto me esté haciendo pasar del presupuesto de esa categoría. Antes de escribir código quiero dejar esto bien definido.",
+      "expected_output": "requirements.md en docs/specs/<fecha>-<slug>/ acotado a las DOS capacidades pedidas más sus bordes, con criterios EARS numerados y citables. Sin requisitos de regresión (el repo está vacío). Parada en el gate declarando qué agregó por su cuenta. NO debe existir design.md.",
+      "files": [],
+      "assertions": [
+        "PROPORCIONALIDAD: los requisitos funcionales se limitan a las dos capacidades pedidas (fijar presupuesto mensual por categoría, avisar del sobregiro). Capacidades no pedidas —modificar, eliminar, consultar estado, copiar del mes anterior— aparecen en fuera de alcance o en preguntas abiertas, NO como requisitos comprometidos",
+        "NO FABRICA COMPORTAMIENTO EXISTENTE, EN NINGUNA SECCIÓN: ni un requisito SHALL CONTINUE TO, ni una afirmación en presente sobre lo que el sistema hace hoy — incluida la prosa de contexto, que es donde más se cuela — porque el repo no tiene código de dominio",
+        "Respeta el gate: NO crea design.md en el mismo turno",
+        "El mensaje del gate distingue explícitamente qué salió de lo que el usuario pidió y qué agregó el agente por su cuenta",
+        "Crea requirements.md dentro de docs/specs/<YYYY-MM-DD>-<slug>/ con la fecha real de hoy y slug en kebab-case",
+        "Los criterios usan notación EARS en inglés Y cada uno nombra un disparador concreto y un resultado observable, sin adverbios vagos ('correctamente', 'adecuadamente') ni dos comportamientos unidos por 'y'",
+        "Cada criterio es citable de forma individual y estable (identificador con sub-numeración tipo R1.1, no solo encabezados R1 con viñetas sin numerar)",
+        "Fija el borde exacto: un criterio define qué pasa cuando el gasto iguala exactamente el presupuesto, distinguiéndolo de superarlo",
+        "Cubre el caso degenerado de categoría sin presupuesto definido en el período",
+        "Cada decisión tomada sin confirmación del usuario es identificable y refutable por separado, con su identificador citable, y aparece enumerada en el mensaje del gate — no basta con que exista una sección de supuestos si las decisiones propias quedaron escondidas dentro de otras secciones sin mencionarlas",
+        "EL MENSAJE DEL GATE NO MIENTE SOBRE EL DOCUMENTO: los conteos, los identificadores y las preguntas bloqueantes que enumera respuesta.md coinciden con lo que realmente dice requirements.md",
+        "El fuera de alcance nombra al menos tres candidatos plausibles y específicos del dominio, no relleno genérico",
+        "No escribe código de implementación ni tests (guardarraíl mecánico, no señal de calidad)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "importar-csv-modo-rapido",
+      "prompt": "necesito importar el extracto de mi banco. me lo dan en csv con columnas fecha, descripcion y monto, y quiero que cada movimiento se categorice solo si la descripcion matchea alguna regla que yo defina antes. hazlo de corrido sin pausas, quiero ver los dos documentos completos de una",
+      "expected_output": "requirements.md y design.md en la misma carpeta, entregados en un turno sin bloquear (el usuario pidió modo rápido), acotados a parsear el CSV y categorizar por reglas. Trazabilidad que resuelve a casos de prueba reales. Sin contradicciones internas.",
+      "files": [],
+      "assertions": [
+        "PROPORCIONALIDAD: los requisitos se limitan a parsear el CSV de tres columnas, definir reglas y categorizar por coincidencia, más los bordes. Extras no pedidos —deduplicación de movimientos, límites de escala, formatos de banco adicionales— van a fuera de alcance o preguntas abiertas, NO como requisitos",
+        "OBEDECE EL MODO RÁPIDO: entrega ambos documentos en un solo turno sin bloquear con una pregunta de aprobación intermedia",
+        "COMPENSA EL GATE PERDIDO: al ir sin pausas, los supuestos y las preguntas abiertas quedan registrados y las preguntas indican si bloquean el diseño",
+        "CONSISTENCIA INTERNA: cuando una decisión de diseño se justifica apoyándose en el comportamiento de otra pieza, esa otra pieza efectivamente lo hace; y ninguna transformación aparece definida de dos formas distintas en documentos o secciones diferentes",
+        "TODO CAMPO OPCIONAL TIENE CRITERIO: cada campo declarado opcional o con valor por defecto en el modelo de datos tiene un criterio de aceptación que define qué pasa cuando falta",
+        "Crea requirements.md y design.md en la MISMA carpeta docs/specs/<YYYY-MM-DD>-<slug>/ con la fecha real",
+        "Cada criterio es citable de forma individual y estable (sub-numeración tipo R1.1)",
+        "design.md incluye tabla de trazabilidad y cada etiqueta de su columna de casos de prueba resuelve a un caso que existe de verdad en la sección de estrategia de pruebas, no a texto plausible",
+        "La trazabilidad no deja criterios huérfanos ni celdas vacías",
+        "El modelo de datos explicita la representación del monto (entero en centavos vs decimal)",
+        "La moneda queda resuelta explícitamente, de una de las dos formas válidas: modelada como dato en el modelo, o declarada como supuesto refutable de moneda única. Lo que falla es que no se mencione en absoluto",
+        "Cubre filas malformadas y archivo inválido con criterios en patrón IF ... THEN",
+        "Cubre el caso en que la descripción no matchea ninguna regla, trazado a un criterio numerado Y a un caso de prueba con resultado esperado",
+        "Prosa en español con las palabras clave EARS en inglés y mayúsculas",
+        "Si el diseño propone una dependencia nueva, la justifica explícitamente contra la regla del CLAUDE.md de no agregar dependencias sin necesidad"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "reportes-ambiguo-debe-preguntar",
+      "prompt": "quiero agregar reportes a la app",
+      "expected_output": "Debe detenerse y pedir clarificación con 2-4 preguntas concretas con opciones y recomendación, sin escribir ningún documento de spec (con cualquier nombre). Debe ofrecer una salida rápida para quien no quiera contestar una por una.",
+      "files": [],
+      "assertions": [
+        "SE DETIENE DE VERDAD: no escribe ningún documento de especificación bajo docs/ con ningún nombre (ni requirements.md, ni borrador.md, ni equivalente), deja la decisión al usuario",
+        "Hace entre 2 y 4 preguntas de primer nivel, y la carga total de decisiones que le pide al usuario es manejable (no un cuestionario de decenas de puntos)",
+        "Cada pregunta ofrece opciones concretas y una recomendación razonada, no una invitación abierta",
+        "Al menos una pregunta ataca el alcance: qué reportes entran y qué queda fuera",
+        "Al menos una pregunta ataca la unidad de verdad del dominio con más de un aspecto (no solo el rango de fechas): moneda, redondeo, o el caso de división por cero",
+        "OFRECE SALIDA RÁPIDA: propone avanzar con sus recomendaciones por defecto si el usuario no quiere responder una por una, aclarando que quedarán registradas como supuestos refutables",
+        "USA EL CONTEXTO DEL REPO: menciona algo concreto del CLAUDE.md o del estado del repositorio (stack, regla de una feature a la vez, ausencia de código) que condicione las preguntas",
+        "Detecta que 'reportes' en plural puede ser más de una feature y propone acotar a una",
+        "No escribe código de implementación ni tests (guardarraíl mecánico, no señal de calidad)"
+      ]
+    }
+  ]
+}
