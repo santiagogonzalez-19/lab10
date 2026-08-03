@@ -4,3 +4,9 @@
 # Ajustes locales de Claude Code (por maquina, no se comparten)
 .claude/settings.local.json
 **/.claude/settings.local.json
+
+# Worktrees de Claude Code. Son checkouts del propio repo: commitearlos duplica
+# el arbol dentro de si mismo, y encima en el estado viejo en que quedo la sesion
+# que los creo. Git ya los conoce por .git/worktrees, no hacen falta acá.
+.claude/worktrees/
+**/.claude/worktrees/
