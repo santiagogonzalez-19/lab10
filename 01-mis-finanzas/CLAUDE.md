@@ -22,13 +22,16 @@ npm test # vitest run
 
 Cada `[gate]` es una parada real: se presenta el documento y no se avanza sin aprobación explícita. Un requisito equivocado que pasa a diseño se multiplica en decisiones de arquitectura equivocadas, así que el gate es el punto más barato para cambiar de opinión.
 
-| Fase | Skill | Qué produce |
+| Fase | Skill / subagente | Qué produce |
 |---|---|---|
 | Explorar la idea | `/brainstorming` | un diseño acordado en la conversación; no escribe archivos |
 | Especificar | `/specify` | `docs/specs/<YYYY-MM-DD>-<slug>/requirements.md`, `design.md` y `tasks.md` |
+| Planificar / replanificar | subagente `planner` | `tasks.md`, una tarea por llamado |
 | Ejecutar | — | tests y código, en TDD; y la bitácora de cada tarea en `tasks.md` |
 
 `/brainstorming` termina en un diseño aprobado y encadena con `/specify`. `/specify` cubre los tres documentos y se detiene ahí: escribir el código queda fuera de su alcance.
+
+El subagente `planner` es el que escribe y audita `tasks.md`, y se llama **una tarea por vez**: primero en modo `inventario` (títulos y orden, sin bloques `Plan`), después una vez por tarea, y al final en modo `cierre`. Cada llamado devuelve `PENDIENTES DE REVISIÓN` y `SIGUIENTE`; se vuelve a llamar hasta que el modo `cierre` dé `PLAN LISTO`, y solo entonces se presenta el Gate 3. Revisar veinte tareas de un tirón es lo que produce veinte bloques `Plan` plausibles y mal dimensionados, que es el defecto que este corte evita. El planner no escribe código, no toca `requirements.md` ni `design.md`, y no abre el gate: eso lo hace la sesión que lo llamó.
 
 `tasks.md` es a la vez el plan y su registro. El plan de cada tarea se escribe una vez y no se toca; la bitácora se va escribiendo **durante** la implementación, con las decisiones que se tomaron, los desvíos respecto del diseño y lo que se descubrió. Por eso no se retoca el plan para que coincida con lo que terminó pasando: la diferencia entre lo planeado y lo hecho es lo único que no se puede reconstruir leyendo el código.
 
