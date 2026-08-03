@@ -1,9 +1,12 @@
-# Eval cases for the `brainstorming` skill.
-# Two kinds of case:
-#   - trigger_cases:   does the frontmatter `description` fire on the right prompts?
-#                      (run_evals.py checks these with a transparent keyword heuristic)
-#   - behavioral_cases: given it fired, does the body guide the right behavior?
-#                      (these require Claude/human judgment — the runner only lists them)
+# Structural lint + trigger cases for the `brainstorming` skill.
+#   - trigger_cases:    does the frontmatter `description` fire on the right prompts?
+#                       (checked with a transparent keyword heuristic — a proxy)
+#   - behavioral_cases: the ones that need SEVERAL real conversational turns, so no
+#                       harness runs them. They stay a manual checklist on purpose.
+#
+# The handoff behaviour is NOT here: it is executable and lives in evals.json.
+#
+# Run with:  python3 ../../lint_skill.py brainstorming
 
 skill: brainstorming
 
@@ -12,8 +15,16 @@ skill: brainstorming
 description_must_contain:
   - "creative work"
   - "out of scope"
+  - "specify"        # the handoff target; if this drops, the chain goes silent
 
-# Transparent heuristic used by run_evals.py to approximate triggering.
+# Structural markers whose absence would be a real regression. They live here as
+# data instead of hardcoded in the runner, so one generic linter serves every
+# skill without knowing anything about any of them.
+must_contain_body:
+  - "<HARD-GATE>"
+  - "## Handoff"
+
+# Transparent heuristic used to approximate triggering.
 # A prompt is judged to FIRE when it hits a fire_keyword and no block_keyword.
 # Tune these lists as the skill evolves.
 heuristic:

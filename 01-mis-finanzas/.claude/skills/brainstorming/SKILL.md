@@ -30,7 +30,7 @@ The approved design lives only in the conversation, and that is deliberate — b
 Close the brainstorming like this:
 
 1. Summarize the agreed design in a few lines — this is the input `specify` will work from.
-2. Name the next step explicitly: the spec goes to `docs/specs/<YYYY-MM-DD>-<slug>/`, starting with `requirements.md`, with an approval gate before the design document.
+2. Name the next step explicitly: the spec goes to `docs/specs/<YYYY-MM-DD>-<slug>/` as three documents — `requirements.md`, then `design.md`, then `tasks.md` — each behind its own approval gate, starting with the requirements. Say there are three stops and not one: someone who expects a single review gets surprised twice, and the gates only work as the cheap place to change your mind if the user knows they are coming.
 3. Ask for the go-ahead, then invoke the `specify` skill.
 
 Ask rather than invoking silently: the user may want to sit with the design, split it into more than one spec, or start with a different piece. A single short question costs nothing and keeps the decision theirs. If they say go, invoke `specify` — don't paraphrase its process by hand, since it carries its own templates, notation rules, and gates.

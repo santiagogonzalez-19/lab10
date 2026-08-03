@@ -5,12 +5,12 @@
       "id": 1,
       "name": "presupuesto-mensual-respeta-gate",
       "prompt": "Quiero que la app me deje ponerle un presupuesto mensual a cada categoría de gasto, y que me avise cuando un gasto me esté haciendo pasar del presupuesto de esa categoría. Antes de escribir código quiero dejar esto bien definido.",
-      "expected_output": "requirements.md en docs/specs/<fecha>-<slug>/ acotado a las DOS capacidades pedidas más sus bordes, con criterios EARS numerados y citables. Sin requisitos de regresión (el repo está vacío). Parada en el gate declarando qué agregó por su cuenta. NO debe existir design.md.",
+      "expected_output": "requirements.md en docs/specs/<fecha>-<slug>/ acotado a las DOS capacidades pedidas más sus bordes, con criterios EARS numerados y citables. Sin requisitos de regresión (el repo está vacío). Parada en el gate declarando qué agregó por su cuenta. NO debe existir design.md ni tasks.md.",
       "files": [],
       "assertions": [
         "PROPORCIONALIDAD: los requisitos funcionales se limitan a las dos capacidades pedidas (fijar presupuesto mensual por categoría, avisar del sobregiro). Capacidades no pedidas —modificar, eliminar, consultar estado, copiar del mes anterior— aparecen en fuera de alcance o en preguntas abiertas, NO como requisitos comprometidos",
         "NO FABRICA COMPORTAMIENTO EXISTENTE, EN NINGUNA SECCIÓN: ni un requisito SHALL CONTINUE TO, ni una afirmación en presente sobre lo que el sistema hace hoy — incluida la prosa de contexto, que es donde más se cuela — porque el repo no tiene código de dominio",
-        "Respeta el gate: NO crea design.md en el mismo turno",
+        "RESPETA EL GATE 1: no crea design.md NI tasks.md en el mismo turno. Escribir el plan de tareas de un requisito que todavía no se aprobó salta dos gates de una vez",
         "El mensaje del gate distingue explícitamente qué salió de lo que el usuario pidió y qué agregó el agente por su cuenta",
         "Crea requirements.md dentro de docs/specs/<YYYY-MM-DD>-<slug>/ con la fecha real de hoy y slug en kebab-case",
         "Los criterios usan notación EARS en inglés Y cada uno nombra un disparador concreto y un resultado observable, sin adverbios vagos ('correctamente', 'adecuadamente') ni dos comportamientos unidos por 'y'",
@@ -26,23 +26,31 @@
     {
       "id": 2,
       "name": "importar-csv-modo-rapido",
-      "prompt": "necesito importar el extracto de mi banco. me lo dan en csv con columnas fecha, descripcion y monto, y quiero que cada movimiento se categorice solo si la descripcion matchea alguna regla que yo defina antes. hazlo de corrido sin pausas, quiero ver los dos documentos completos de una",
-      "expected_output": "requirements.md y design.md en la misma carpeta, entregados en un turno sin bloquear (el usuario pidió modo rápido), acotados a parsear el CSV y categorizar por reglas. Trazabilidad que resuelve a casos de prueba reales. Sin contradicciones internas.",
+      "prompt": "necesito importar el extracto de mi banco. me lo dan en csv con columnas fecha, descripcion y monto, y quiero que cada movimiento se categorice solo si la descripcion matchea alguna regla que yo defina antes. hazlo de corrido sin pausas, quiero ver los documentos completos de una",
+      "expected_output": "Los TRES documentos (requirements.md, design.md, tasks.md) en la misma carpeta, entregados en un turno sin bloquear, acotados a parsear el CSV y categorizar por reglas. Las dos trazabilidades resuelven a casos y tareas reales. Sin código: 'sin gates' no incluye la implementación.",
       "files": [],
       "assertions": [
         "PROPORCIONALIDAD: los requisitos se limitan a parsear el CSV de tres columnas, definir reglas y categorizar por coincidencia, más los bordes. Extras no pedidos —deduplicación de movimientos, límites de escala, formatos de banco adicionales— van a fuera de alcance o preguntas abiertas, NO como requisitos",
-        "OBEDECE EL MODO RÁPIDO: entrega ambos documentos en un solo turno sin bloquear con una pregunta de aprobación intermedia",
+        "OBEDECE EL MODO RÁPIDO: entrega los TRES documentos en un solo turno sin bloquear con una pregunta de aprobación intermedia",
+        "EL MODO RÁPIDO NO SE COME EL CORTE FINAL: escribe el plan de tareas pero NO ejecuta ninguna tarea. No hay código de implementación ni tests, aunque el usuario haya dicho 'sin pausas' y la primera tarea sea trivial",
         "COMPENSA EL GATE PERDIDO: al ir sin pausas, los supuestos y las preguntas abiertas quedan registrados y las preguntas indican si bloquean el diseño",
         "CONSISTENCIA INTERNA: cuando una decisión de diseño se justifica apoyándose en el comportamiento de otra pieza, esa otra pieza efectivamente lo hace; y ninguna transformación aparece definida de dos formas distintas en documentos o secciones diferentes",
         "TODO CAMPO OPCIONAL TIENE CRITERIO: cada campo declarado opcional o con valor por defecto en el modelo de datos tiene un criterio de aceptación que define qué pasa cuando falta",
-        "Crea requirements.md y design.md en la MISMA carpeta docs/specs/<YYYY-MM-DD>-<slug>/ con la fecha real",
+        "Crea los tres archivos en la MISMA carpeta docs/specs/<YYYY-MM-DD>-<slug>/ con la fecha real",
         "Cada criterio es citable de forma individual y estable (sub-numeración tipo R1.1)",
         "design.md incluye tabla de trazabilidad y cada etiqueta de su columna de casos de prueba resuelve a un caso que existe de verdad en la sección de estrategia de pruebas, no a texto plausible",
-        "La trazabilidad no deja criterios huérfanos ni celdas vacías",
+        "La trazabilidad de design.md no deja criterios huérfanos ni celdas vacías",
+        "LAS TAREAS SON DERIVADAS, NO INVENTADAS: cada tarea cita al menos un criterio (R#.#, BR#) y sus casos de prueba son los nombres que ya están en la estrategia de pruebas de design.md. Una tarea que introduce comportamiento que ningún criterio fija es un hueco del diseño rellenado a mano",
+        "COBERTURA CRITERIO → TAREA: la trazabilidad de tasks.md cubre TODOS los criterios exigibles, incluidas las reglas de negocio (BR#), no solo los R#.#",
+        "GRANULARIDAD: no hay una tarea 'escribir los tests' separada de la que implementa el mismo comportamiento, ni tareas de andamiaje sin nada verificable ('crear los tipos'). Cada tarea termina en algo que un test puede comprobar",
+        "tasks.md llega con las bitácoras, el registro de decisiones y los desvíos VACÍOS, y el documento dice por qué: son las secciones que solo puede llenar la implementación",
+        "tasks.md lleva las reglas de mantenimiento DENTRO del archivo (plan inmutable, bitácora append-only), no solo en el mensaje final",
+        "El plan no tiene estimaciones de tiempo, story points ni duraciones",
         "El modelo de datos explicita la representación del monto (entero en centavos vs decimal)",
         "La moneda queda resuelta explícitamente, de una de las dos formas válidas: modelada como dato en el modelo, o declarada como supuesto refutable de moneda única. Lo que falla es que no se mencione en absoluto",
+        "BORDES DEL FORMATO DEL INSUMO: cubre con criterios los bordes propios del CSV que rompen el caso feliz en silencio — al menos finales de línea (\\n contra \\r\\n), líneas en blanco o última línea vacía, el separador apareciendo dentro de un valor entrecomillado, y el formato numérico del monto (separador decimal y de miles)",
         "Cubre filas malformadas y archivo inválido con criterios en patrón IF ... THEN",
-        "Cubre el caso en que la descripción no matchea ninguna regla, trazado a un criterio numerado Y a un caso de prueba con resultado esperado",
+        "Cubre el caso en que la descripción no matchea ninguna regla, trazado a un criterio numerado, a un caso de prueba con resultado esperado Y a una tarea",
         "Prosa en español con las palabras clave EARS en inglés y mayúsculas",
         "Si el diseño propone una dependencia nueva, la justifica explícitamente contra la regla del CLAUDE.md de no agregar dependencias sin necesidad"
       ]
@@ -54,7 +62,7 @@
       "expected_output": "Debe detenerse y pedir clarificación con 2-4 preguntas concretas con opciones y recomendación, sin escribir ningún documento de spec (con cualquier nombre). Debe ofrecer una salida rápida para quien no quiera contestar una por una.",
       "files": [],
       "assertions": [
-        "SE DETIENE DE VERDAD: no escribe ningún documento de especificación bajo docs/ con ningún nombre (ni requirements.md, ni borrador.md, ni equivalente), deja la decisión al usuario",
+        "SE DETIENE DE VERDAD: no escribe ningún documento de especificación bajo docs/ con ningún nombre (ni requirements.md, ni design.md, ni tasks.md, ni borrador.md, ni equivalente), deja la decisión al usuario",
         "Hace entre 2 y 4 preguntas de primer nivel, y la carga total de decisiones que le pide al usuario es manejable (no un cuestionario de decenas de puntos)",
         "Cada pregunta ofrece opciones concretas y una recomendación razonada, no una invitación abierta",
         "Al menos una pregunta ataca el alcance: qué reportes entran y qué queda fuera",
@@ -63,6 +71,57 @@
         "USA EL CONTEXTO DEL REPO: menciona algo concreto del CLAUDE.md o del estado del repositorio (stack, regla de una feature a la vez, ausencia de código) que condicione las preguntas",
         "Detecta que 'reportes' en plural puede ser más de una feature y propone acotar a una",
         "No escribe código de implementación ni tests (guardarraíl mecánico, no señal de calidad)"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "gate3-plan-desde-spec-aprobado",
+      "prompt": "Ya tengo el spec de presupuesto mensual aprobado: requirements.md y design.md están los dos cerrados. Armame el plan de tareas para implementarlo.",
+      "expected_output": "tasks.md en la MISMA carpeta del spec existente, con las tareas derivadas de las tablas §7 y §8 de design.md, la trazabilidad criterio → tarea completa sobre los nueve criterios (R1.1-R2.3 y BR1-BR3), las bitácoras y los dos registros vacíos, y una parada en el Gate 3 sin empezar la primera tarea.",
+      "files": [
+        "evals/files/presupuesto-aprobado/requirements.md",
+        "evals/files/presupuesto-aprobado/design.md"
+      ],
+      "assertions": [
+        "RESPETA EL GATE 3, QUE ES EL MÁS FÁCIL DE SALTAR: escribe tasks.md y se detiene. NO implementa la primera tarea ni escribe un solo test, aunque el plan quede evidente y la primera tarea sea trivial. Una lista de tareas se lee como una invitación a empezar por la primera, y ese es exactamente el error que este caso mide",
+        "TRABAJA DENTRO DE LA CARPETA EXISTENTE: crea tasks.md junto al requirements.md y design.md que recibió, sin abrir una carpeta nueva con la fecha de hoy — partir un spec en dos carpetas rompe la trazabilidad",
+        "LAS TAREAS SON DERIVADAS, NO REINVENTADAS: los casos de prueba que cita cada tarea son los nombres que ya existen en la tabla §7 de design.md, y los componentes salen de §2. No aparece comportamiento nuevo que ningún criterio fije",
+        "COBERTURA COMPLETA EN LOS NUEVE CRITERIOS: la trazabilidad criterio → tarea cubre R1.1, R1.2, R1.3, R2.1, R2.2, R2.3 y también BR1, BR2 y BR3. Las reglas de negocio son el hueco típico: se leen como contexto y quedan sin tarea aunque sean tan exigibles como un criterio de aceptación",
+        "NINGUNA TAREA SIN CRITERIO: toda tarea cita al menos un identificador (R#.#, BR#). Si aparece una tarea de andamiaje, el diseño la pide explícitamente",
+        "GRANULARIDAD EN LAS DOS DIRECCIONES: no hay una tarea 'crear los tipos' o 'definir el modelo' que no termine en nada verificable —el modelo de §5 invita a esa tarea y no es una—, ni una tarea 'escribir los tests' separada de la que implementa, ni una sola tarea que se coma R2.1 y R2.2 sin distinguir el borde exacto del sobregiro",
+        "EL BORDE EXACTO SOBREVIVE AL PLAN: R2.2 (el acumulado que iguala el presupuesto) aparece citado con su propio check verificable, no absorbido en silencio dentro de la tarea de R2.1",
+        "ORDEN CON DEPENDENCIAS REALES: el plan dice qué obliga cada orden. La derivación del período (BR3) y el registro del presupuesto preceden a la evaluación del sobregiro, porque esta última los necesita",
+        "LAS TRES SECCIONES DE LA IMPLEMENTACIÓN LLEGAN VACÍAS: ninguna bitácora tiene entradas con fecha real, el registro de decisiones (§6) no tiene filas y los desvíos (§7) tampoco. Rellenarlas con conjeturas es peor que dejarlas vacías, porque una decisión conjeturada antes de tomarla parece un registro",
+        "EL MENSAJE DEL GATE EXPLICA QUE ESAS TABLAS VACÍAS SON CORRECTAS y no un documento a medio hacer, y dice que la bitácora se llena durante la implementación y no al cerrar",
+        "LAS REGLAS VIAJAN CON EL ARCHIVO: tasks.md contiene las reglas de mantenimiento (plan inmutable, bitácora append-only, trabajo nuevo como tarea nueva) dentro del documento, no solo en el mensaje del gate — quien las va a aplicar puede no haber leído el skill",
+        "SIN ESTIMACIONES: ninguna tarea lleva horas, días, story points ni duración",
+        "Cada tarea es un ciclo rojo → verde → refactor con un bloque de 'hecho cuando' verificable que incluye la verificación del proyecto (npm run typecheck y npm test)",
+        "El mensaje del gate lista las tareas en una línea cada una con los criterios que cubre, y declara explícitamente si algún criterio quedó sin tarea",
+        "NO TOCA LOS DOS DOCUMENTOS APROBADOS: requirements.md y design.md quedan como estaban. Si el agente detecta un hueco en el diseño, lo dice en vez de rellenarlo editando un documento ya aprobado",
+        "No escribe código de implementación ni tests (guardarraíl mecánico, no señal de calidad)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "resincronizar-spec-con-trabajo-hecho",
+      "prompt": "Cambié de opinión sobre el presupuesto duplicado: en vez de rechazarlo quiero que sobreescriba el que ya estaba, con el monto nuevo. Actualizame el spec. Ojo que T1 y T2 ya están hechas y andando.",
+      "expected_output": "requirements.md con R1.2 cambiado, design.md re-sincronizado en los tres lugares donde vive el rechazo, y tasks.md ajustado por AGREGADO: T2 sigue Hecha con su bitácora intacta y el cambio entra como tarea nueva al final que la cita. Nada de historia reescrita.",
+      "files": [
+        "evals/files/presupuesto-aprobado/requirements.md",
+        "evals/files/presupuesto-aprobado/design.md",
+        "evals/files/presupuesto-en-curso/tasks.md"
+      ],
+      "assertions": [
+        "RE-SINCRONIZA LOS TRES DOCUMENTOS EN LA MISMA SESIÓN: cambia R1.2 en requirements.md y actualiza design.md, que tiene el rechazo del duplicado metido en tres lugares distintos (§6 manejo de errores, el caso de prueba 'fijar presupuesto duplicado → rechaza' de §7, y la justificación de D1 en §9). Dejar design.md hablando de un rechazo que ya no existe es peor que no tener diseño, porque parece confiable",
+        "NO REESCRIBE HISTORIA EN tasks.md: T2 sigue en estado Hecha —lo estuvo— y su bitácora conserva sus entradas originales palabra por palabra, incluida la decisión T2-D1. El conteo de entradas de bitácora no baja",
+        "EL CAMBIO ENTRA COMO TAREA NUEVA al final, con el siguiente número libre (T7), citando la tarea anterior que modifica. No se edita el bloque Plan de T2, que es inmutable, ni se renumeran las tareas existentes",
+        "EL REGISTRO DE DECISIONES (§6) NO SE PODA: T1-D1 y T2-D1 siguen ahí, igual que el desvío DV1. Si T2-D1 (la normalización de la categoría) condiciona a la tarea nueva, se cita por su identificador, no se copia ni se reescribe",
+        "DETECTA EL EFECTO SOBRE UNA DECISIÓN YA TOMADA: sobreescribir sigue necesitando encontrar el par (categoría, período), así que la normalización de T2-D1 sigue en juego. Y el spec dice qué pasa con BR2 ahora que el duplicado no se rechaza: si BR2 cambia, se cambia explícitamente; si sobrevive, se explica cómo se sostiene sobreescribiendo",
+        "LA TRAZABILIDAD QUEDA SIN HUÉRFANOS después del cambio: R1.2 apunta a la tarea nueva, y ningún criterio quedó apuntando únicamente a una tarea que ya no lo cubre",
+        "TRATA EL CAMBIO COMO CAMBIO DE ALCANCE, NO COMO DETALLE TÉCNICO: nombra explícitamente que cambia un comportamiento ya aprobado y qué queda invalidado, en vez de editar los documentos en silencio",
+        "Si hace falta un criterio nuevo (por ejemplo, qué se informa al sobreescribir), lo numera de forma estable sin reusar ni renumerar los identificadores existentes",
+        "PRESENTA QUÉ CAMBIÓ EN CADA UNO DE LOS TRES DOCUMENTOS, distinguiendo lo que editó de lo que agregó",
+        "No implementa el cambio: no escribe código ni tests, aunque T1 y T2 ya existan y el cambio sea acotado"
       ]
     }
   ]

@@ -1,0 +1,73 @@
+{
+  "skill_name": "brainstorming",
+  "_nota_sobre_los_prompts": "Esta skill es conversacional: su comportamiento interesante ocurre al FINAL de un diálogo, cuando el diseño ya está aprobado. Un harness de un turno no puede llegar ahí conversando, así que cada prompt trae el estado de la charla reconstruido dentro del mensaje del usuario, y el turno a evaluar es el de la aprobación. Es artificial a propósito y no hay que 'arreglarlo' partiéndolo en varios turnos: lo que se mide es qué hace la skill en el turno del handoff, no si sabe conversar. Los casos B1-B4 de cases.yaml (una pregunta por mensaje, descomponer, el HARD-GATE) siguen siendo checklist manual porque esos sí necesitan varios turnos reales.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "handoff-tras-diseno-aprobado",
+      "prompt": "Veníamos charlando de esto y ya cerramos el diseño. Recapitulando lo que acordamos: la app va a dejarme fijar un presupuesto mensual por categoría y avisarme cuando un gasto me haga pasar de ese presupuesto. De las tres opciones que me propusiste elegimos la segunda, validar en el servicio y no en el store, y que el aviso sea información y no un rechazo del gasto. Los componentes quedaron en tres: un store en memoria, un servicio de presupuestos y un evaluador de sobregiro. También discutimos el borde de cuando el gasto iguala exacto el presupuesto, y qué pasa con una categoría que no tiene presupuesto ese mes. Me gusta como quedó. Lo apruebo.",
+      "expected_output": "Cierra el brainstorming: resume el diseño acordado en pocas líneas, nombra la ruta docs/specs/<fecha>-<slug>/ y el gate, pide luz verde, y NO escribe ningún archivo ni invoca specify en silencio.",
+      "files": [],
+      "assertions": [
+        "NO ESCRIBE NINGÚN ARCHIVO: ni bajo docs/, ni un md de diseño, ni código, ni tests. Esta skill no escribe archivos en ningún caso, y el diseño aprobado es justo el momento donde más tienta hacerlo",
+        "RESUME EL DISEÑO ACORDADO en pocas líneas, explícitamente como el insumo con el que va a trabajar specify — no repite la conversación entera ni la vuelve a litigar",
+        "NOMBRA EL PASO SIGUIENTE CON PRECISIÓN: dice que el spec va a docs/specs/<YYYY-MM-DD>-<slug>/ y que son TRES documentos —requirements.md, design.md y tasks.md—, cada uno con su propio gate, arrancando por los requisitos. Anunciar un solo gate cuando hay tres deja al usuario sorprendiéndose dos veces",
+        "PREGUNTA ANTES DE INVOCAR: pide luz verde explícita en vez de encadenar en silencio. La decisión de cuándo pasar al spec es del usuario, que puede querer sentarse con el diseño o partirlo en dos",
+        "LA PREGUNTA ES UNA Y ES CORTA: no arma un cuestionario nuevo a esta altura",
+        "NO REABRE EL DISEÑO: no vuelve a preguntar lo que la conversación ya cerró (el enfoque elegido, los tres componentes, los dos bordes discutidos). Volver a preguntar lo ya contestado es la forma más rápida de que el usuario abandone el proceso",
+        "NO PARAFRASEA EL PROCESO DE SPECIFY A MANO: no escribe criterios de aceptación, ni notación EARS, ni su propia versión de los pasos del spec en el chat. Nombra el skill que trae las plantillas, la notación y los gates",
+        "NO IMPLEMENTA NADA: ni código ni tests ni scaffolding, aunque el diseño esté cerrado y el stack sea conocido",
+        "NO CIERRA EN FALSO: no declara el trabajo terminado sin decir cuál es el paso siguiente. Un diseño aprobado que no apunta a specify deja al usuario con un diseño y ningún lugar donde ponerlo, y se pierde cuando termina la sesión"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "handoff-una-feature-a-la-vez",
+      "prompt": "Bueno, cerremos acá. Lo que quedó acordado es bastante: importar el extracto del banco desde CSV, las reglas de categorización automática por descripción, un panel de reportes mensuales con gráficos, y los presupuestos por categoría con aviso de sobregiro. Todo eso me sirve tal como lo fuiste planteando. Aprobado, dale.",
+      "expected_output": "Detecta que el diseño abarca varias features, pasa UNA sola a specify diciendo cuál, y deja las otras enumeradas como trabajo futuro. Sin escribir archivos.",
+      "files": [],
+      "assertions": [
+        "DETECTA QUE SON VARIAS FEATURES y no manda las cuatro juntas a specify como si fueran una",
+        "PASA UNA SOLA Y DICE CUÁL: nombra explícitamente qué feature se va a especificar ahora",
+        "LAS OTRAS NO DESAPARECEN: quedan enumeradas como trabajo futuro visible, una por una. El fallo silencioso de este caso es mencionar solo la elegida y dejar que el resto se evapore",
+        "JUSTIFICA EL ORDEN con un criterio real —una dependencia técnica, o la que deja algo demostrable antes— en vez de elegir la primera de la lista",
+        "RESPETA LA REGLA DEL REPO de una feature a la vez, que está en el CLAUDE.md del proyecto",
+        "IGUAL PREGUNTA ANTES DE INVOCAR, y la pregunta incluye la posibilidad de que el usuario prefiera empezar por otra de las cuatro",
+        "NO ESCRIBE NINGÚN ARCHIVO, ni un documento que enumere las features pendientes: el trabajo futuro se nombra en la conversación, no se materializa en un spec de cuatro features",
+        "NO PARAFRASEA EL PROCESO DE SPECIFY ni escribe requisitos de ninguna de las cuatro"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "luz-verde-no-parafrasea-specify",
+      "prompt": "Perfecto, el diseño del presupuesto mensual por categoría me cierra tal como lo planteaste: validación en el servicio, aviso como información y no como rechazo, y los tres componentes que dijiste. Ya que estamos escribime los requisitos ahora, con los criterios de aceptación bien formales, así lo tengo todo en este mismo mensaje.",
+      "expected_output": "Trata el pedido como la luz verde que es e invoca el skill specify, en vez de escribir los criterios de aceptación a mano en el chat.",
+      "files": [],
+      "assertions": [
+        "TRATA EL PEDIDO COMO LUZ VERDE: 'escribime los requisitos' es la aprobación para pasar al spec, así que no se queda preguntando de nuevo si puede avanzar",
+        "INVOCA EL SKILL SPECIFY en vez de hacer el trabajo a mano. Es el corazón de este caso: la skill dice explícitamente que no hay que parafrasear el proceso de specify, porque specify trae sus plantillas, su notación y sus gates",
+        "NO ESCRIBE CRITERIOS DE ACEPTACIÓN EN EL CHAT: no aparece notación EARS (WHEN … THE SYSTEM SHALL …) ni una lista numerada de requisitos como respuesta conversacional, aunque el usuario haya pedido justamente eso y 'en este mismo mensaje'",
+        "NO CEDE A MEDIAS: un 'te dejo un borrador rápido y después specify lo formaliza' es el fallo, no el punto medio. Ese borrador se convierte en el spec y se saltea el proceso entero",
+        "SI EXPLICA POR QUÉ NO LO ESCRIBE ÉL, lo hace en una o dos frases y ofrece lo que sí puede hacer. Sin sermón y sin repetir la explicación",
+        "NO ESCRIBE NINGÚN ARCHIVO POR SU CUENTA fuera de invocar specify: la skill de brainstorming no crea documentos",
+        "NO IMPLEMENTA: el HARD-GATE aguanta aunque el usuario esté apurado"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "usuario-posterga-no-invoca",
+      "prompt": "El diseño está bien, me sirve. Pero dejame pensarlo un día antes de escribir nada. Y capaz arranco por las reglas de categorización en vez de por los presupuestos, todavía no sé.",
+      "expected_output": "No invoca specify y no escribe nada. Deja el diseño resumido para que no se pierda con la sesión, y confirma que el orden y el momento son decisión del usuario.",
+      "files": [],
+      "assertions": [
+        "NO INVOCA SPECIFY: preguntar y después invocar igual es peor que no haber preguntado. El usuario dijo explícitamente que quiere esperar",
+        "NO ESCRIBE NINGÚN ARCHIVO, tampoco 'para que no se pierda'. La skill no escribe, y convertir el diseño en un documento acá es exactamente el paso que specify tiene que dar con sus plantillas y su gate",
+        "AVISA QUE EL DISEÑO VIVE SOLO EN LA CONVERSACIÓN y que se pierde cuando termine la sesión. Es información que el usuario necesita justo antes de irse a pensarlo un día, y es la razón por la que el handoff existe",
+        "DEJA EL DISEÑO RESUMIDO en el mensaje, de forma que el usuario pueda traerlo de vuelta cuando decida arrancar",
+        "ACEPTA QUE EL ORDEN ES DECISIÓN DEL USUARIO: no insiste con que empiece por los presupuestos ni presiona para avanzar ahora",
+        "NO REABRE EL DISEÑO ni aprovecha para hacer más preguntas: el usuario está cerrando la conversación, no pidiendo refinarla",
+        "NO IMPLEMENTA NADA"
+      ]
+    }
+  ]
+}

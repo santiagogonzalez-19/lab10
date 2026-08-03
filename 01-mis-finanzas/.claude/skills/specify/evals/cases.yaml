@@ -1,0 +1,105 @@
+# Lint estructural y casos de disparo del skill `specify`.
+#
+# El comportamiento vive en evals.json (5 casos ejecutables con ejecutor+grader).
+# Este archivo cubre lo otro: que el archivo no se degrade solo y que la
+# descripción siga disparando donde dice que dispara.
+#
+# Se corre con:  python3 ../../lint_skill.py specify
+
+skill: specify
+
+# ── Guardas de la descripción ────────────────────────────────────────────────
+# `specify` es la skill con más superficie de triggering del proyecto: su
+# descripción promete disparar con media docena de paráfrasis y al terminar un
+# brainstorming. Cada frase de acá es una promesa que se rompe en silencio si
+# alguien acorta la descripción: la skill deja de dispararse y nadie se entera,
+# porque el fallo se ve como "el modelo no la usó esta vez".
+description_must_contain:
+  - "requirements.md"      # el primer documento
+  - "design.md"            # el segundo
+  - "tasks.md"             # el tercero — se perdió una vez ya, al crecer a 3 fases
+  - "EARS"                 # la notación es parte de la identidad de la skill
+  - "brainstorming"        # el encadenamiento: si se cae, el handoff no dispara
+  - "gate de aprobación"   # los gates son lo único que este proceso vende
+  - "fuera de alcance"     # el corte del final
+
+# Lo que la descripción NO debe recuperar. El scope creep de una skill entra por
+# su descripción antes que por su cuerpo: primero promete un poco más, y después
+# alguien escribe la sección que lo cumple.
+description_must_not_contain:
+  - "ejecuta las tareas"
+  - "escribe los tests"
+  - "commit"
+
+# ── Presupuesto ──────────────────────────────────────────────────────────────
+# Hoy son 227 líneas, contra 169 dos días antes: creció 34% al ganar la Fase 3.
+# El techo no es para congelarla, es para que el próximo crecimiento sea una
+# decisión y no un descuido. Si hace falta subirlo, se sube a mano.
+max_lines: 300
+max_description_chars: 1400
+
+# Marcadores estructurales cuya ausencia sería una regresión de fondo.
+must_contain_body:
+  - "## Proporcionalidad"
+  - "### Gate 1"
+  - "### Gate 2"
+  - "### Gate 3"
+  - "### Fase 3"
+  - "## Modo rápido"
+
+# ── Heurística de disparo ────────────────────────────────────────────────────
+# PROXY, no verdad: el disparo real es una decisión semántica del modelo. Lo que
+# esto detecta es que la descripción perdió una paráfrasis que decía cubrir, o
+# que empezó a pisar prompts que no le tocan.
+#
+# Los stems van cortados a propósito ("arregl", "renombr") para atrapar las
+# conjugaciones del español sin listarlas una por una.
+heuristic:
+  fire_keywords:
+    [spec, especificar, especifica, requisitos, requerimientos, diseñar,
+     diseño, documentar, planear, feature, agregar, construir, implementar,
+     "necesito que", "quiero que", "hagamos", "cómo deberíamos", brainstorming]
+  block_keywords:
+    [typo, bug, debug, failing, "run tests", arregl, renombr, "por qué",
+     "primera tarea", "arrancá con", "arranca con", ejecutá, "corré los",
+     "está fallando"]
+
+trigger_cases:
+  - id: T1
+    prompt: "Quiero agregar presupuestos mensuales por categoría de gasto"
+    should_fire: true
+  - id: T2
+    prompt: "necesito que la app me avise cuando me paso del presupuesto"
+    should_fire: true
+  - id: T3
+    prompt: "hagamos el spec de la importación del extracto en CSV"
+    should_fire: true
+  - id: T4
+    prompt: "cómo deberíamos construir la categorización automática"
+    should_fire: true
+    note: "sin la palabra spec — la descripción dice cubrir esta paráfrasis"
+  - id: T5
+    prompt: "El diseño quedó aprobado en el brainstorming, pasá al spec"
+    should_fire: true
+    note: "el encadenamiento; depende de que la descripción nombre brainstorming"
+  - id: T6
+    prompt: "Arreglá el typo en CLAUDE.md"
+    should_fire: false
+  - id: T7
+    prompt: "por qué falla este test de vitest"
+    should_fire: false
+  - id: T8
+    prompt: "Ya tenemos el spec aprobado, arrancá con la primera tarea"
+    should_fire: false
+    note: "EL CASO IMPORTANTE: hay spec y toca ejecutar, no especificar. Si specify dispara acá, secuestra la implementación con tres gates"
+  - id: T9
+    prompt: "renombrá la carpeta de specs"
+    should_fire: false
+    note: "menciona specs y aun así no le toca"
+
+# ── Casos de comportamiento ──────────────────────────────────────────────────
+# Vacío a propósito: los cinco casos de comportamiento de esta skill son
+# ejecutables y viven en evals.json, que es donde deben estar. Esta lista existe
+# en `brainstorming` porque sus casos B1-B4 necesitan varios turnos reales de
+# conversación y no hay harness que los corra.
+behavioral_cases: []
