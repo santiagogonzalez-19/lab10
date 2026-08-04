@@ -5,7 +5,7 @@
 | **Requisitos** | [requirements.md](./requirements.md) |
 | **Diseño** | [design.md](./design.md) |
 | **Estado del plan** | Borrador |
-| **Última actualización** | 2026-07-31 |
+| **Última actualización** | 2026-08-04 |
 
 ## 1. Cómo se mantiene este documento
 
@@ -69,17 +69,21 @@
 |---|---|
 | **Requisitos** | R1.10, R5.9, R3.7, R3.2 (parcial: derivar el mes), BR3 |
 | **Casos de prueba** | CP1 mes `"2026-07"` válido · CP2 `"2026-13"`/`"2026-00"` → `MES_INVALIDO` · CP3 `"2026-7"`/`"julio"`/`""` → `MES_INVALIDO` · CP4 fecha `"2026-06-28"` → mes `"2026-06"` · CP5 `"2026-02-30"` → `FECHA_INVALIDA` · CP6 `"28/06/2026"`/`"2026-6-8"` → `FECHA_INVALIDA` |
-| **Componente** | `Resultado`, `tipos`, `mes` |
-| **Archivos previstos** | `package.json`, `tsconfig.json`, `vitest.config.ts`, `src/domain/resultado.ts`, `src/domain/tipos.ts`, `src/domain/mes.ts`, `src/domain/mes.test.ts` |
+| **Componente** | `mes`; `Resultado` y `tipos` como declaraciones de apoyo |
+| **Archivos previstos** | `package.json`, `tsconfig.json`, `vitest.config.ts`, `.gitignore` (en la raíz del repo, un nivel arriba de este proyecto), `src/domain/resultado.ts`, `src/domain/tipos.ts`, `src/domain/mes.ts`, `src/domain/mes.test.ts` |
 | **Decisiones que la condicionan** | D1 (design.md): el dominio devuelve `Resultado`, no lanza |
 
-Incluye el andamiaje porque `npm run typecheck` y `npm test` son los comandos de verificación de todas las tareas siguientes y hoy no existen: el último commit del repo revirtió el andamiaje. CP5 es el caso que obliga a validar contra el calendario real y no solo con una expresión regular.
+Incluye el andamiaje porque `npm run typecheck` y `npm test` son los comandos de verificación de todas las tareas siguientes y hoy no existen: el commit `35eaa77` los revirtió y ninguno de los commits posteriores los repuso. **No es un ciclo aparte**: el andamiaje no tiene un rojo propio, y su verificación es precisamente que el rojo de CP1–CP6 pueda correr. `Resultado` y `tipos` entran por la misma razón —son declaraciones sin comportamiento, y CP1–CP6 no compilan sin ellas—, no como dos ciclos más.
+
+CP5 es el caso que obliga a validar contra el calendario real y no solo con una expresión regular. `mes.ts` no importa `node:*`: la restricción de NF4 vale desde el primer archivo del dominio, y T18 la convierte en test.
+
+El `.gitignore` de la raíz del repo perdió `node_modules/`, `dist/`, `coverage/` y `*.tsbuildinfo` en ese mismo revert; hay que reponerlos acá, que es donde aparece el primer `npm install`. `datos/` no se ignora todavía: ese directorio lo introduce T13.
 
 *Hecho cuando:*
 
-- [ ] `npm run typecheck` y `npm test` ejecutan (aunque los tests fallen)
-- [ ] CP1–CP6 fallan por la razón esperada: `validarMes` y `validarFecha` todavía no existen
-- [ ] CP1–CP6 pasan
+- [ ] `npm test` ejecuta y CP1–CP6 fallan por la razón esperada: `validarMes`, `validarFecha` y `mesDe` no existen
+- [ ] CP1–CP6 pasan, con `validarMes` y `validarFecha` devolviendo `Resultado` sin lanzar, y `mesDe` devolviendo `Mes` sobre una fecha ya validada
+- [ ] `git status` no lista `node_modules/` entre los archivos sin seguimiento
 - [ ] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
