@@ -1,0 +1,134 @@
+# Lint estructural y casos de disparo del skill `planning-tasks`.
+#
+# Se corre con:  python3 ../../lint_skill.py planning-tasks
+
+skill: planning-tasks
+
+# ── Guardas de la descripción ────────────────────────────────────────────────
+# Esta skill vive pegada a `specify`: las dos hablan de specs, y la frontera es
+# que `specify` produce los tres documentos desde cero y esta solo itera el
+# tercero. Cada frase de acá sostiene esa frontera o el mecanismo que la hace
+# distinta (el fan-out de subagentes). Si alguna se cae, la skill deja de
+# dispararse donde debe y nadie se entera: el fallo se ve como "esta vez el
+# modelo no la usó".
+description_must_contain:
+  - "planner"           # el mecanismo: sin el subagente esto es otra skill
+  - "tasks.md"          # el único documento que escribe
+  - "requirements.md"   # el insumo
+  - "design.md"         # el otro insumo — de acá salen las tareas
+  - "un solo"           # la rama de arranque
+  - "uno por tarea"     # la rama de fan-out; es la mitad del valor de la skill
+  - "100%"              # la meta declarada
+  - "/specify"          # el encadenamiento: si se cae, el handoff no dispara
+  - "no escribe código" # el corte del final
+
+# Lo que la descripción NO debe recuperar. El scope creep entra por la
+# descripción antes que por el cuerpo: primero promete un poco más, y después
+# alguien escribe la sección que lo cumple.
+description_must_not_contain:
+  - "EARS"          # es de requirements.md, y eso es de `specify`
+  - "bitácora"      # la llena la implementación, nunca esta skill
+  - "escribe los tests"
+  - "commit"
+
+# ── Presupuesto ──────────────────────────────────────────────────────────────
+# 215 líneas al nacer. El techo no la congela: hace que el próximo crecimiento
+# sea una decisión y no un descuido.
+max_lines: 280
+max_description_chars: 1100
+
+# Marcadores estructurales cuya ausencia sería una regresión de fondo. Los dos
+# que más importan son la regla del paralelismo (sin ella la skill propone algo
+# que corrompe el archivo) y el bucle (sin él no hay "100%", hay una pasada).
+must_contain_body:
+  - "## La meta"
+  - "## Fase 0"
+  - "## Fase 1"
+  - "## Fase 3"
+  - "## Fase 5"
+  - "## Gate 1"
+  - "## Gate 2"
+  - "## La regla que hace posible el paralelismo"
+  - "## El bucle"
+  - "## Verificación mecánica"
+
+# ── Heurística de disparo ────────────────────────────────────────────────────
+# PROXY, no verdad: el disparo real es una decisión semántica del modelo. Esto
+# detecta que la descripción perdió una paráfrasis que decía cubrir, o que
+# empezó a pisar prompts que le tocan a `specify` o a la implementación.
+#
+# Los stems van cortados ("arregl", "renombr", "dimension") para atrapar las
+# conjugaciones del español sin listarlas una por una.
+heuristic:
+  fire_keywords:
+    ["plan de tareas", "plan de implementación", tareas, "tasks.md", dimension,
+     "demasiado grande", partir, partila, inventario, desalineado, replanific,
+     "sin tarea", "quedó viejo"]
+  block_keywords:
+    [typo, bug, debug, "por qué", arregl, renombr, bitácora, "arrancá con",
+     "arranca con", "primera tarea", "corré los", "está fallando", "run tests"]
+
+trigger_cases:
+  - id: T1
+    prompt: "Armá el plan de tareas del spec de presupuesto mensual"
+    should_fire: true
+  - id: T2
+    prompt: "El diseño ya está aprobado, ¿en qué tareas se parte esto?"
+    should_fire: true
+    note: "sin nombrar el archivo; es la paráfrasis más frecuente al salir del Gate 2"
+  - id: T3
+    prompt: "revisá si las tareas de tasks.md están bien dimensionadas"
+    should_fire: true
+  - id: T4
+    prompt: "T4 me parece demasiado grande, hay que partirla en dos"
+    should_fire: true
+    note: "una sola tarea, no el plan entero — igual entra por acá"
+  - id: T5
+    prompt: "cambié el design.md y el plan de implementación quedó desalineado"
+    should_fire: true
+  - id: T6
+    prompt: "faltan tareas que cubran R4.6 y R6.4, ninguna las construye"
+    should_fire: true
+  - id: T7
+    prompt: "hagamos el spec de la importación del extracto en CSV"
+    should_fire: false
+    note: "EL CASO IMPORTANTE: no hay diseño todavía. Esto es /specify desde la Fase 1; si planning-tasks dispara acá, planea sobre arena"
+  - id: T8
+    prompt: "escribí los requisitos de la categorización automática"
+    should_fire: false
+  - id: T9
+    prompt: "Ya tenemos el plan aprobado, arrancá con la primera tarea"
+    should_fire: false
+    note: "EL OTRO CASO IMPORTANTE: hay plan y toca ejecutar. Si dispara acá, replanifica en vez de implementar"
+  - id: T10
+    prompt: "actualizá la bitácora de T3 con lo que decidimos hoy"
+    should_fire: false
+    note: "la bitácora es de quien implementa; esta skill no la toca nunca"
+  - id: T11
+    prompt: "por qué falla el test de mes.test.ts"
+    should_fire: false
+  - id: T12
+    prompt: "renombrá la carpeta de specs"
+    should_fire: false
+
+# ── Casos de comportamiento ──────────────────────────────────────────────────
+# Sin evals.json: el comportamiento de esta skill es una orquestación de varios
+# subagentes contra un archivo que se muta entre invocaciones, y no hay harness
+# que lo corra de un tiro. Verificarlo pide una sesión real, así que queda como
+# checklist manual. Los cuatro casos son los modos de fallo que costarían caro.
+behavioral_cases:
+  - id: B1
+    scenario: "Spec con requirements.md y design.md aprobados, sin tasks.md"
+    expect: "lanza EXACTAMENTE un planner (no uno por tarea imaginada), y para en el Gate 1 con el inventario antes de desarrollar los bloques"
+  - id: B2
+    scenario: "tasks.md con 21 tareas ya desarrolladas, se pide auditarlo"
+    expect: "el diagnóstico sale en paralelo y en modo lectura; ninguna invocación paralela escribe tasks.md; la aplicación va en serie por T#"
+  - id: B3
+    scenario: "Dos informes se contradicen (T4 quiere absorber a T5 y T5 a T4)"
+    expect: "no lo resuelve a ojo: reinvoca con las dos como objetivo, o lo lleva al gate. Nunca elige una y sigue"
+  - id: B4
+    scenario: "tasks.md con T1–T3 `Hecha` y bitácora escrita, y un design.md que cambió"
+    expect: "no pide reescribir el plan de T1–T3; propone tarea nueva al final citando la anterior, y no toca ninguna bitácora"
+  - id: B5
+    scenario: "Un planner devuelve `bloqueado` porque falta comportamiento que ningún criterio fija"
+    expect: "no rellena el hueco: sigue con las demás tareas y lo lleva al gate nombrando el documento donde se arregla"
