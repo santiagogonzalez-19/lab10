@@ -180,10 +180,13 @@ def analizar(carpeta, inf):
     # ── Bloques §4 ───────────────────────────────────────────────────────────
     bloques = bloques_tareas(sec_tas.get(4, ""))
 
-    for t in inventario:
-        if t not in bloques:
-            inf.error("§3 ↔ §4", f"{t} está en el inventario y no tiene bloque "
-                                 f"desarrollado en §4.")
+    # Una fila sin bloque no es un defecto: es el estado normal entre el
+    # arranque y el final del bucle. Reportarla como error por cada tarea
+    # ahogaba los defectos de verdad — un bootstrap recién hecho salía con 20
+    # "errores" y ninguno lo era. Va como progreso, en una línea.
+    pendientes = [t for t in inventario if t not in bloques]
+    planeadas = set(inventario) | set(bloques)
+
     for t in bloques:
         if t not in inventario:
             inf.error("§3 ↔ §4", f"{t} tiene bloque en §4 y no aparece en el "
@@ -238,9 +241,13 @@ def analizar(carpeta, inf):
                             f"(se esperan entre 2 y 4): "
                             f"{'suele ser una tarea demasiado grande' if len(checks) > 4 else 'puede no cerrar un ciclo'}.")
 
-    for cp in sorted(cps_diseno - set().union(*cps_reclamados.values(), set())):
-        inf.aviso("§7 → §4", f"{cp} está en design.md §7 y ninguna tarea lo "
-                             f"reclama — es una prueba que nadie va a escribir.")
+    # Solo tiene sentido con el plan completo: mientras falten bloques, todos
+    # los CP de las tareas sin desarrollar figuran como huérfanos y el aviso
+    # deja de informar nada.
+    if not pendientes:
+        for cp in sorted(cps_diseno - set().union(*cps_reclamados.values(), set())):
+            inf.aviso("§7 → §4", f"{cp} está en design.md §7 y ninguna tarea lo "
+                                 f"reclama — es una prueba que nadie va a escribir.")
 
     # ── Trazabilidad §5 ──────────────────────────────────────────────────────
     traza = {}
@@ -252,9 +259,14 @@ def analizar(carpeta, inf):
         if not ts:
             inf.error("§5", f"{f[0]} no tiene ninguna tarea asignada — es un "
                             f"criterio aprobado que nadie va a implementar.")
+        # Contra el plan entero, no solo contra los bloques escritos: una tarea
+        # que está en el inventario existe aunque todavía no se haya
+        # desarrollado, y §5 se escribe completa desde el arranque justamente
+        # para que se vea la cobertura antes de escribir las 21 tareas.
         for t in ts:
-            if t not in bloques:
-                inf.error("§5 → §4", f"{f[0]} apunta a {t}, que no existe.")
+            if t not in planeadas:
+                inf.error("§5 → plan", f"{f[0]} apunta a {t}, que no está ni en "
+                                       f"el inventario §3 ni en §4.")
 
     for c in sorted(crit_diseno - set(traza)):
         inf.error("§8 → §5", f"{c} lo cubre design.md §8 y no aparece en la "
@@ -270,7 +282,8 @@ def analizar(carpeta, inf):
                                      f"las dos tablas se están separando.")
 
     return {"tareas": len(bloques), "inventario": len(inventario),
-            "criterios": len(crit_diseno), "casos": len(cps_diseno)}
+            "criterios": len(crit_diseno), "casos": len(cps_diseno),
+            "pendientes": pendientes}
 
 
 def main():
@@ -288,36 +301,53 @@ def main():
     inf = Informe()
     resumen = analizar(carpeta, inf)
 
+    pendientes = resumen["pendientes"]
+
     if args.json:
         print(json.dumps({
             "resumen": resumen,
+            "completo": not pendientes,
             "errores": [{"categoria": c, "detalle": d} for c, d in inf.errores],
             "avisos": [{"categoria": c, "detalle": d} for c, d in inf.avisos],
         }, ensure_ascii=False, indent=2))
-        sys.exit(1 if inf.errores else 0)
+        sys.exit(1 if inf.errores or pendientes else 0)
 
     print(f"\n{BOLD}Cobertura del plan — {carpeta.name}{RESET}")
     print(f"{DIM}  {resumen['inventario']} filas en §3 · {resumen['tareas']} bloques "
           f"en §4 · {resumen['criterios']} criterios en el diseño · "
           f"{resumen['casos']} casos de prueba{RESET}\n")
 
+    if pendientes:
+        print(f"  {YELLOW}EN CURSO{RESET}  "
+              f"{resumen['tareas']}/{resumen['inventario']} tareas desarrolladas. "
+              f"Faltan: {', '.join(pendientes)}")
+        print(f"            {DIM}Los chequeos que necesitan el plan completo "
+              f"(CP sin tarea) quedan en espera.{RESET}\n")
+
     for etiqueta, color, items in (("ERROR", RED, inf.errores),
                                    ("aviso", YELLOW, inf.avisos)):
         for categoria, detalle in items:
             print(f"  {color}{etiqueta}{RESET}  {DIM}[{categoria}]{RESET} {detalle}")
+    if inf.errores or inf.avisos:
+        print()
 
-    print()
     if inf.errores:
         print(f"  {RED}{len(inf.errores)} error(es){RESET}"
               + (f", {len(inf.avisos)} aviso(s)" if inf.avisos else "")
-              + " — el plan todavía no está cerrado.\n")
+              + " — hay referencias que no cierran.\n")
+        sys.exit(1)
+    if pendientes:
+        print(f"  {GREEN}Lo escrito cierra{RESET}"
+              + (f", {YELLOW}{len(inf.avisos)} aviso(s){RESET}" if inf.avisos else "")
+              + f" — pero faltan {len(pendientes)} tareas por desarrollar.\n")
         sys.exit(1)
     if inf.avisos:
-        print(f"  {GREEN}Sin errores{RESET}, {YELLOW}{len(inf.avisos)} aviso(s){RESET}"
-              " — revisalos antes del gate.\n")
+        print(f"  {GREEN}Plan completo y sin errores{RESET}, "
+              f"{YELLOW}{len(inf.avisos)} aviso(s){RESET} — revisalos antes del gate.\n")
     else:
-        print(f"  {GREEN}Todo cierra.{RESET} Las referencias del plan son "
-              f"consistentes con el spec.\n")
+        print(f"  {GREEN}Todo cierra.{RESET} Plan completo y consistente con el "
+              f"spec: las {resumen['inventario']} tareas desarrolladas y cada "
+              f"criterio con la suya.\n")
     sys.exit(0)
 
 

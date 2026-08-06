@@ -182,7 +182,9 @@ Ronda = diagnóstico en paralelo → consolidar → escribir en serie. Repite.
 python3 .claude/skills/planning-tasks/scripts/cobertura.py docs/specs/<carpeta>/
 ```
 
-Cruza `requirements.md`, `design.md` §7/§8 y `tasks.md` §3/§4/§5, y reporta lo que ningún ojo humano ve de forma confiable: criterios sin tarea, tareas sin criterio, filas de §3 sin bloque, `CP#` citados que no existen en el diseño, `CP#` del diseño que ninguna tarea reclama, §4 y §5 desalineadas, dependencias que apuntan a una tarea inexistente o posterior, y bloques a los que les falta una parte del plan. Sale con código 0 solo si no hay errores.
+Cruza `requirements.md`, `design.md` §7/§8 y `tasks.md` §3/§4/§5, y reporta lo que ningún ojo humano ve de forma confiable: criterios sin tarea, tareas sin criterio, `CP#` citados que no existen en el diseño, `CP#` del diseño que ninguna tarea reclama, §4 y §5 desalineadas, dependencias que apuntan a una tarea inexistente o posterior, y bloques a los que les falta una parte del plan.
+
+Distingue **incompleto** de **roto**, y es la distinción que lo hace usable: una fila de §3 sin bloque en §4 no es un defecto, es el estado normal entre el arranque y el final del bucle, así que sale como una línea de progreso (`3/21 tareas desarrolladas`) y no como veinte errores que tapan los de verdad. Los chequeos que solo tienen sentido con el plan entero —los `CP#` huérfanos— esperan a que no falte ninguna tarea. Sale con código 0 solo cuando el plan está **completo y sin errores**, que es la definición operativa de la meta.
 
 Es un complemento del juicio del planner, no un reemplazo: verifica que las referencias cierren, no que la tarea tenga el tamaño correcto. Un plan puede pasarlo entero y estar mal dimensionado — para eso está la ronda de auditoría.
 
