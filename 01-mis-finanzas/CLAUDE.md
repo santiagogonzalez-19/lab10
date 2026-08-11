@@ -25,10 +25,11 @@ Cada `[gate]` es una parada real: se presenta el documento y no se avanza sin ap
 | Fase | Skill | Qué produce |
 |---|---|---|
 | Explorar la idea | `/brainstorming` | un diseño acordado en la conversación; no escribe archivos |
-| Especificar | `/specify` | `docs/specs/<YYYY-MM-DD>-<slug>/requirements.md`, `design.md` y `tasks.md` |
+| Especificar | `/specify` | `docs/specs/<YYYY-MM-DD>-<slug>/requirements.md` y `design.md` |
+| Planear | `/planning-tasks` | `tasks.md` iterado al 100%, orquestando el subagente `planner` |
 | Ejecutar | — | tests y código, en TDD; y la bitácora de cada tarea en `tasks.md` |
 
-`/brainstorming` termina en un diseño aprobado y encadena con `/specify`. `/specify` cubre los tres documentos y se detiene ahí: escribir el código queda fuera de su alcance.
+`/brainstorming` termina en un diseño aprobado y encadena con `/specify`. `/specify` cubre `requirements.md` y `design.md` con sus dos gates, y al aprobarse el diseño encadena con `/planning-tasks`. `/planning-tasks` produce `tasks.md` orquestando el subagente `planner` —un solo planner deriva el inventario inicial cuando no hay tareas; uno por tarea las dimensiona cuando ya existen— y se detiene en el gate del plan: escribir el código queda fuera del alcance de los tres.
 
 `tasks.md` es a la vez el plan y su registro. El plan de cada tarea se escribe una vez y no se toca; la bitácora se va escribiendo **durante** la implementación, con las decisiones que se tomaron, los desvíos respecto del diseño y lo que se descubrió. Por eso no se retoca el plan para que coincida con lo que terminó pasando: la diferencia entre lo planeado y lo hecho es lo único que no se puede reconstruir leyendo el código.
 

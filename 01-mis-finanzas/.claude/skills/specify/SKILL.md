@@ -1,11 +1,11 @@
 ---
 name: specify
-description: 'Proceso de especificación Requirements-First (estilo Kiro) que produce requirements.md con notación EARS, luego design.md y finalmente tasks.md, con un gate de aprobación humana entre fases. Usa este skill SIEMPRE que se vaya a definir, especificar, diseñar o planear una feature antes de implementarla — incluso si el usuario no dice la palabra "spec": frases como "quiero agregar X", "necesito que la app haga Y", "hagamos el spec de", "escribe los requisitos de", "documenta el diseño de", "cómo deberíamos construir Z", o cuando pida implementar algo no trivial y no exista aún un spec en docs/specs/. Úsalo también para refinar o corregir un spec existente, y SIEMPRE al terminar un /brainstorming cuyo diseño quedó aprobado: este skill es el paso que convierte ese diseño en documentos. Cubre requirements.md, design.md y tasks.md — escribir el código queda fuera de alcance.'
+description: 'Proceso de especificación Requirements-First (estilo Kiro) que produce requirements.md con notación EARS, luego design.md, y encadena con /planning-tasks para tasks.md, con un gate de aprobación humana entre fases. Usa este skill SIEMPRE que se vaya a definir, especificar, diseñar o planear una feature antes de implementarla — incluso si el usuario no dice la palabra "spec": frases como "quiero agregar X", "necesito que la app haga Y", "hagamos el spec de", "escribe los requisitos de", "documenta el diseño de", "cómo deberíamos construir Z", o cuando pida implementar algo no trivial y no exista aún un spec en docs/specs/. Úsalo también para refinar o corregir un spec existente, y SIEMPRE al terminar un /brainstorming cuyo diseño quedó aprobado: este skill es el paso que convierte ese diseño en documentos. Cubre requirements.md y design.md, y delega tasks.md en /planning-tasks — escribir el código queda fuera de alcance.'
 ---
 
 # specify — Requirements-First
 
-Convierte una idea difusa en tres documentos aprobados: **qué debe hacer el sistema** (`requirements.md`), **cómo se va a construir** (`design.md`) y **en qué orden se construye, con registro de lo que se decidió al construirlo** (`tasks.md`).
+Convierte una idea difusa en tres documentos aprobados: **qué debe hacer el sistema** (`requirements.md`), **cómo se va a construir** (`design.md`) y **en qué orden se construye, con registro de lo que se decidió al construirlo** (`tasks.md`). Los dos primeros los escribe este skill; el tercero lo produce `/planning-tasks` orquestando el subagente `planner`, y este skill encadena con él cuando el diseño queda aprobado.
 
 El orden importa. Requirements-First significa que primero se fija el comportamiento observable y solo después se decide la arquitectura, de modo que el diseño se adapte a la necesidad y no al revés. Si el usuario ya llega con una arquitectura impuesta o con restricciones técnicas duras, dilo: ese caso pide un flujo Design-First, que este skill no cubre; se puede seguir igual, pero con la advertencia de que los requisitos van a quedar teñidos por la solución.
 
@@ -15,11 +15,11 @@ El orden importa. Requirements-First significa que primero se fija el comportami
 |---|---|
 | `requirements.md` en notación EARS | Escribir código o tests |
 | `design.md` con arquitectura y estrategia de pruebas | Ejecutar las tareas del plan |
-| `tasks.md`: plan de implementación y bitácora de decisiones | Estimaciones de tiempo, tickets, roadmap |
+| Encadenar con `/planning-tasks` para el plan de tareas | Escribir `tasks.md` a mano: lo produce `/planning-tasks` |
 | Preguntas de clarificación antes de escribir | Decidir prioridades de producto |
-| Refinar un spec existente | |
+| Refinar un spec existente | Estimaciones de tiempo, tickets, roadmap |
 
-Cuando termines el plan de tareas y esté aprobado, **detente y dilo**. La tentación de seguir hasta el código es fuerte, y es máxima justo ahí: una lista de tareas se lee como una invitación a empezar por la primera. Pero el valor de este proceso está en el corte, y escribir el plan y ejecutarlo en el mismo turno anula el último gate — el usuario revisa el plan completo antes de que exista una sola línea que le cueste tirar.
+El corte del final no cambia por delegar el plan: el proceso termina cuando `/planning-tasks` deja el plan aprobado en su gate, y ahí **se detiene todo**. La tentación de seguir hasta el código es fuerte, y es máxima justo ahí: una lista de tareas se lee como una invitación a empezar por la primera. Pero el valor de este proceso está en el corte — el usuario revisa el plan completo antes de que exista una sola línea que le cueste tirar.
 
 ## Proporcionalidad: el spec cubre lo que se pidió
 
@@ -152,57 +152,27 @@ La sección de **estrategia de pruebas** merece cuidado especial si el equipo tr
 
 ### Gate 2 — Aprobación de diseño
 
-Presenta la ruta, un resumen de las decisiones de arquitectura con su alternativa descartada, la tabla de trazabilidad, y los riesgos. Luego cierra: el diseño está aprobado, y pregunta si pasas a escribir el plan de tareas.
+Presenta la ruta, un resumen de las decisiones de arquitectura con su alternativa descartada, la tabla de trazabilidad, y los riesgos. Luego cierra: el diseño está aprobado, y pregunta si invocas `/planning-tasks` para armar el plan de tareas.
 
-### Fase 3 — Escribir tasks.md
+### Fase 3 — El plan de tareas: delegar en `/planning-tasks`
 
-Solo después de aprobar el diseño. Usa `assets/tasks-template.md`.
+Solo después de aprobar el diseño, y el plan no lo escribes tú: **invoca el skill `planning-tasks`** con la carpeta del spec. Ese skill orquesta el subagente `planner` —un solo planner deriva el inventario inicial cuando `tasks.md` no existe; uno por tarea las dimensiona cuando ya hay plan— hasta dejar `tasks.md` iterado al 100% contra las tablas §7 y §8 de `design.md`, que ya son la lista de pruebas rojas del TDD.
 
-**Las tareas no se inventan: se derivan.** El insumo es la tabla de estrategia de pruebas del diseño (§7) junto con la de trazabilidad (§8), que ya son la lista de pruebas rojas del TDD. Escribir la lista de tareas es agruparlas en unidades ejecutables y ponerlas en orden — no es una ronda nueva de pensar qué hace la feature. Si al escribir una tarea necesitas inventar comportamiento que ningún criterio fija, no encontraste una tarea: encontraste un hueco en el diseño, y se resuelve volviendo atrás, no rellenándolo acá. Y una tarea que no cita ningún `R#.#` sobra, salvo las de andamiaje que el propio diseño pide.
+Por qué se delega en vez de escribir el plan de una sentada: las tareas no se inventan, se derivan de la estrategia de pruebas, y dimensionar cada una exige releer el spec entero y el estado real del repo. Ese juicio se degrada cuando lo hace de corrido el mismo contexto que acaba de redactar dos documentos; un planner por tarea le da a la tarea 15 la misma atención que a la 1. Si un planner encuentra comportamiento que ningún criterio fija, eso es un hueco del diseño y vuelve acá — se arregla un documento más arriba, no rellenándolo en el plan.
 
-**Una tarea es un ciclo rojo → verde → refactor**, del tamaño de un commit. La granularidad falla en las dos direcciones y conviene reconocer las dos:
-
-- *Demasiado grande*: si el "Hecho cuando" necesita más de tres o cuatro checks, o si toca capas verificables por separado, son dos tareas.
-- *Demasiado chica*: una tarea que no termina en algo verificable —"crear los tipos", "agregar el archivo"— deja su verificación para otra tarea y con eso rompe el ciclo. Si el paso no da para test propio, es parte de la tarea que sí lo tiene.
-
-Tampoco es una tarea por archivo, ni una tarea "escribir los tests" separada de la que implementa: en TDD el test y el código del mismo comportamiento son el mismo ciclo, y partirlos convierte el plan en una invitación a escribir el test después.
-
-**El orden lo mandan las dependencias reales**, y entre tareas independientes, la que deje algo demostrable antes. Sin estimaciones de tiempo: este documento dice qué falta y en qué orden, no cuánto tarda.
-
-**Cobertura, en los dos sentidos.** Cada criterio de aceptación —los `R#.#`, las `BR#` y los `REG#` si existen— tiene que aparecer en al menos una tarea, y eso se verifica con la tabla de trazabilidad criterio → tarea. Es el mismo tipo de chequeo que cierra la Fase 2, pero atrapa un error distinto: el diseño puede cubrir un criterio en una sección y aun así nadie encargarse de construirlo.
-
-**El documento tiene dos autores y dos momentos, y de eso depende que sirva.** La Fase 3 escribe el plan; quien implementa escribe la bitácora, tarea por tarea. Por eso el bloque `Plan` de cada tarea es inmutable y la bitácora es append-only: si al terminar se edita el plan para que describa lo que realmente se hizo, el documento queda perfectamente coherente y pierde lo único que no se puede reconstruir del código —que el plan decía A y la implementación hizo B, y por qué—. Un plan retocado es indistinguible de un plan que salió bien.
-
-Deja esas reglas escritas **dentro** del archivo (§1 de la plantilla), no solo en el mensaje del gate. Quien va a llenar la bitácora puede no ser quien leyó este skill.
-
-**Las decisiones de construcción necesitan un índice, no solo una bitácora.** Una decisión anotada dentro de la tarea que la tomó está en el lugar correcto para entenderla y en el peor lugar para encontrarla: quien más la necesita es quien arranca una tarea posterior, y no sabe que existe, así que no la busca. Ese es el camino por el que una feature termina con dos definiciones incompatibles de la misma cosa —el defecto que la Fase 2 revisa a mano en el diseño— pero introducido durante la implementación, cuando ya no hay gate que lo atrape. Por eso la plantilla tiene un registro de decisiones (§6) que es un índice de punteros, y por eso cada tarea declara en su plan las decisiones previas que la condicionan.
-
-Esa fila de "decisiones que la condicionan" es la única excepción a la inmutabilidad del plan, y es deliberada: en la Fase 3 no puedes saber qué va a decidir la tarea de más adelante. Anotar un ID no reescribe el plan.
-
-Las tres tablas del documento no se solapan, y conviene tenerlo claro al escribirlo: la trazabilidad (§5) dice **qué falta cubrir**, el registro de decisiones (§6) dice **por qué algo quedó así**, y los desvíos (§7) dicen **dónde el diseño dejó de describir la realidad**.
+Lo que no cambia por delegar: una tarea sigue siendo un ciclo rojo → verde → refactor del tamaño de un commit, el plan de cada tarea es inmutable, la bitácora es append-only, y el documento lleva sus reglas adentro (§1 de la plantilla), porque quien lo va a llenar durante la implementación puede no haber leído ningún skill. Esas reglas viven en `assets/tasks-template.md` —que el `planner` lee antes de escribir— y en el contrato del propio `planner`: no las dupliques acá ni en la conversación, que dos versiones de la misma regla terminan diciendo cosas distintas.
 
 ### Gate 3 — Aprobación del plan
 
-Escribe el archivo y **detente**. No empieces la primera tarea en el mismo turno, aunque la tarea sea trivial y el test evidente.
+Lo presenta `/planning-tasks`, en dos paradas: primero el inventario —la forma del plan, cuando reagrupar todavía es barato— y después el plan completo, tarea por tarea con los criterios que cubre. Tu trabajo es no anticiparlo ni duplicarlo: no resumas tareas que los planners todavía están dimensionando, y no vuelvas a presentar lo que ese skill ya presentó.
 
-Presenta al usuario:
-
-1. La ruta del archivo.
-2. Las tareas en una línea cada una, con los criterios que cubre (`T3 — Rechazar presupuesto duplicado (R1.2, BR2)`), para que pueda revisar el plan sin abrir el documento.
-3. El orden y qué lo obliga: cuáles son dependencias técnicas y cuáles elegiste tú.
-4. Los criterios que quedaron sin tarea. Debería ser ninguno; si hay alguno, eso es lo primero que hay que discutir.
-5. Lo que decidiste **no** convertir en tarea aunque estuviera cerca, y por qué.
-6. Una pregunta directa: ¿arranco por la primera tarea, o hay algo que reordenar?
-
-Las bitácoras, el registro de decisiones (§6) y los desvíos (§7) quedan **vacíos** en este punto, y eso es correcto, no un documento a medio hacer: son las tres secciones que solo puede llenar la implementación. Dilo al presentar, porque un archivo con tres tablas vacías se lee como trabajo pendiente y alguien va a querer rellenarlas con conjeturas — y una decisión conjeturada antes de tomarla es peor que ninguna, porque parece un registro.
-
-Cierra diciendo qué pasa después: la implementación es un paso aparte, y la bitácora de cada tarea se llena mientras se ejecuta, no al final. Una bitácora escrita al cierre es una reconstrucción, y las reconstrucciones se acuerdan de las decisiones que salieron bien.
+Lo que sigue vigente venga de donde venga el plan: aprobado, **detente**. La implementación es un paso aparte y no arranca en el mismo turno, aunque la primera tarea sea trivial y el test evidente. La bitácora de cada tarea se llena mientras se ejecuta, no al final — una bitácora escrita al cierre es una reconstrucción, y las reconstrucciones se acuerdan de las decisiones que salieron bien.
 
 ## Refinar un spec existente
 
-Si el usuario cambia los requisitos de un spec ya escrito, edita `requirements.md` y después **re-sincroniza `design.md` y `tasks.md`** en la misma sesión — un diseño que ya no corresponde a sus requisitos es peor que no tener diseño, porque parece confiable, y un plan desactualizado es peor todavía, porque alguien lo va a ejecutar. Revisa las dos tablas de trazabilidad para encontrar qué filas quedaron huérfanas o sin cubrir.
+Si el usuario cambia los requisitos de un spec ya escrito, edita `requirements.md`, **re-sincroniza `design.md` en la misma sesión, y delega la re-sincronización de `tasks.md` en `/planning-tasks`** — un diseño que ya no corresponde a sus requisitos es peor que no tener diseño, porque parece confiable, y un plan desactualizado es peor todavía, porque alguien lo va a ejecutar. Revisa las dos tablas de trazabilidad para encontrar qué filas quedaron huérfanas o sin cubrir.
 
-**`tasks.md` se re-sincroniza distinto que los otros dos**, porque puede tener trabajo ya hecho y bitácora escrita, y eso es historia: no se reescribe. Las reglas al ajustarlo son las mismas que rigen el documento —agregar, nunca reescribir—:
+**`tasks.md` se re-sincroniza distinto que los otros dos**, porque puede tener trabajo ya hecho y bitácora escrita, y eso es historia: no se reescribe. Las reglas las aplica el `planner` que `/planning-tasks` orquesta, y conviene conocerlas para presentar el cambio —agregar, nunca reescribir—:
 
 - Criterio nuevo → tarea nueva al final, con el siguiente número libre.
 - Tarea `Pendiente` que ya no aplica → pasa a `Descartada` con el motivo en su bitácora. No se borra: una tarea borrada se lleva consigo la explicación de por qué existía.
@@ -214,7 +184,7 @@ Si el cambio es al revés (el diseño resultó inviable y hay que aflojar un req
 
 ## Modo rápido
 
-Si el usuario pide explícitamente ir sin pausas ("hazlo de corrido", "sin gates", "quick spec"), escribe los tres archivos y preséntalos juntos al final. Sigue vigente el resto: EARS, plantillas, las dos trazabilidades. Vale para features bien entendidas; si detectas ambigüedad de fondo, pregunta de todos modos — el usuario pidió velocidad, no adivinanza.
+Si el usuario pide explícitamente ir sin pausas ("hazlo de corrido", "sin gates", "quick spec"), escribe `requirements.md` y `design.md` de corrido, invoca `/planning-tasks` para el plan en el mismo turno, y presenta todo junto al final. Sigue vigente el resto: EARS, plantillas, las dos trazabilidades. Vale para features bien entendidas; si detectas ambigüedad de fondo, pregunta de todos modos — el usuario pidió velocidad, no adivinanza.
 
 Lo que el modo rápido no cambia es el corte del final: el spec termina en el plan de tareas aprobado. "Sin gates" significa sin las paradas intermedias, no que la implementación entre en el mismo turno.
 
@@ -222,5 +192,5 @@ Lo que el modo rápido no cambia es el corte del final: el spec termina en el pl
 
 - `assets/requirements-template.md` — estructura de `requirements.md`. Léelo antes de la Fase 1.
 - `assets/design-template.md` — estructura de `design.md`. Léelo antes de la Fase 2.
-- `assets/tasks-template.md` — estructura de `tasks.md`, incluidas las reglas de la bitácora que quedan dentro del documento. Léelo antes de la Fase 3.
+- `assets/tasks-template.md` — estructura de `tasks.md`, incluidas las reglas de la bitácora que quedan dentro del documento. No lo consumes tú: lo lee el `planner` que `/planning-tasks` orquesta; vive acá para que las tres plantillas del spec viajen juntas.
 - `references/ears.md` — los cinco patrones EARS, cuándo usar cada uno y errores frecuentes. Consúltalo al redactar criterios de aceptación, sobre todo si un comportamiento no encaja limpio en `WHEN … SHALL`.
