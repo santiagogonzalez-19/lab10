@@ -1,8 +1,10 @@
 // Conecta los eventos de la pantalla con la API y la vista.
 
 import {
+  borrarGasto,
   copiarLimites,
   fijarLimites,
+  listarGastos,
   registrarGasto,
   verMes,
   type EntradaGasto,
@@ -15,6 +17,7 @@ import {
   dibujarErrorDeEditor,
   dibujarErrorDeGasto,
   dibujarFormularioGasto,
+  dibujarListaDeGastos,
   dibujarMes,
 } from "./vista";
 
@@ -46,6 +49,26 @@ async function cargarMes(mes: string): Promise<void> {
       { alRegistrar: (entrada) => void registrar(mes, entrada) },
     );
   }
+  const gastos = await listarGastos(mes);
+  if (gastos.ok) {
+    // La lista llega ya ordenada de la API (CP68); un mes sin gastos trae [].
+    dibujarListaDeGastos(raiz, gastos.valor.gastos, {
+      alBorrar: (id) => void borrar(mes, id),
+    });
+  } else {
+    dibujarError(raiz, gastos.error);
+  }
+}
+
+async function borrar(mes: string, id: string): Promise<void> {
+  const resultado = await borrarGasto(id);
+  if (!resultado.ok) {
+    dibujarError(raiz, resultado.error);
+    return;
+  }
+  // Tras borrar, el consumo actualizado se vuelve a pedir a la API,
+  // no se recalcula en la vista (riesgo de design.md §10).
+  await cargarMes(mes);
 }
 
 async function registrar(mesEnPantalla: string, entrada: EntradaGasto): Promise<void> {

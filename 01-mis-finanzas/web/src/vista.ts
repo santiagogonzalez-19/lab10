@@ -1,7 +1,14 @@
 // Dibuja el mes. La vista no reordena, no calcula estados ni porcentajes:
 // muestra lo que la API devuelve (D6, riesgo de design.md §10).
 
-import type { Categoria, ConsumoCategoria, EntradaGasto, ErrorApi, VistaMes } from "./api";
+import type {
+  Categoria,
+  ConsumoCategoria,
+  EntradaGasto,
+  ErrorApi,
+  Gasto,
+  VistaMes,
+} from "./api";
 
 const pesos = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -304,4 +311,54 @@ export function dibujarErrorDeGasto(
     parrafo.append(" ", definir);
   }
   raiz.querySelector(".form-gasto")?.append(parrafo);
+}
+
+export type AccionesDeLista = {
+  alBorrar: (id: string) => void;
+};
+
+// Lista de gastos del mes (T22). Llega ya ordenada de la API (CP68): la vista
+// no reordena ni filtra.
+export function dibujarListaDeGastos(
+  raiz: HTMLElement,
+  gastos: Gasto[],
+  acciones: AccionesDeLista,
+): void {
+  const seccion = document.createElement("section");
+  seccion.className = "lista-gastos";
+  const titulo = document.createElement("h2");
+  titulo.textContent = "Gastos del mes";
+  seccion.append(titulo);
+
+  if (gastos.length === 0) {
+    const vacio = document.createElement("p");
+    vacio.className = "detalle";
+    vacio.textContent = "No hay gastos registrados este mes.";
+    seccion.append(vacio);
+    raiz.append(seccion);
+    return;
+  }
+
+  for (const gasto of gastos) {
+    const fila = document.createElement("div");
+    fila.className = "fila-gasto";
+    const fecha = document.createElement("span");
+    fecha.className = "gasto-fecha";
+    fecha.textContent = gasto.fecha;
+    const categoria = document.createElement("span");
+    categoria.className = "gasto-categoria";
+    categoria.textContent = gasto.categoria;
+    const monto = document.createElement("span");
+    monto.className = "gasto-monto";
+    monto.textContent = formatearPesos(gasto.monto);
+    const descripcion = document.createElement("span");
+    descripcion.className = "gasto-descripcion";
+    descripcion.textContent = gasto.descripcion;
+    const borrar = document.createElement("button");
+    borrar.textContent = "Borrar";
+    borrar.addEventListener("click", () => acciones.alBorrar(gasto.id));
+    fila.append(fecha, categoria, monto, descripcion, borrar);
+    seccion.append(fila);
+  }
+  raiz.append(seccion);
 }

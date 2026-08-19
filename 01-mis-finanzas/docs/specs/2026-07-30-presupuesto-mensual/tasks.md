@@ -654,7 +654,7 @@ Extiende `web/src/api.ts` —que T20 crea solo con las rutas de presupuesto— c
 
 ### T22 — UI: listar los gastos del mes y borrar uno
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -670,14 +670,15 @@ Nace de partir la T21 original: registrar (R3/R4) y listar-y-borrar (R6) son dos
 
 *Hecho cuando:*
 
-- [ ] La lista muestra los gastos del mes con su fecha, categoría, monto y descripción, en el orden en que la API los devuelve
-- [ ] Un mes sin gastos muestra la lista vacía, sin error
-- [ ] Borrar un gasto lo quita de la lista y baja el consumo de su categoría
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] La lista muestra los gastos del mes con su fecha, categoría, monto y descripción, en el orden en que la API los devuelve
+- [x] Un mes sin gastos muestra la lista vacía, sin error
+- [x] Borrar un gasto lo quita de la lista y baja el consumo de su categoría
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — `api.ts` extendida con `listarGastos` (`GET /api/gastos?mes=`) y `borrarGasto` (`DELETE /api/gastos/{id}`), como el plan fija. `dibujarListaDeGastos` pinta fecha, categoría, monto y descripción **en el orden en que llegan** (CP68) y el estado «No hay gastos registrados este mes.» para la lista vacía; el botón «Revisar los gastos del mes» del 409 de T23 ahora tiene esta lista como destino real. `web/index.html` ganó el CSS de `.lista-gastos`/`.fila-gasto` (presentación pura, registrado acá).
+- 2026-08-19 — Tras borrar, `cargarMes` vuelve a pedir consumo y lista a la API — la vista no recalcula (riesgo de §10, y decisión que condiciona esta tarea). Verificación manual en navegador real (los 4 checks): (1) julio listó sus 4 gastos en fecha descendente con todos los campos; (2) 2026-10 (con presupuesto y sin gastos) mostró la lista vacía sin error; (3) borrar el gasto de $200 000 lo quitó de la lista y «Transporte» pasó de $250 000/excedido a $50 000/ok — el consumo bajó exactamente el monto; (4) typecheck y suite en verde (95 tests).
 
 ### T23 — UI: fijar y ajustar los límites del mes
 

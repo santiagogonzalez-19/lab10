@@ -96,3 +96,11 @@ export function registrarGasto(entrada: EntradaGasto): Promise<Respuesta<GastoRe
     body: JSON.stringify(entrada),
   });
 }
+
+export function listarGastos(mes: string): Promise<Respuesta<{ gastos: Gasto[] }>> {
+  return pedir(`/api/gastos?mes=${encodeURIComponent(mes)}`);
+}
+
+export function borrarGasto(id: string): Promise<Respuesta<null>> {
+  return pedir(`/api/gastos/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
