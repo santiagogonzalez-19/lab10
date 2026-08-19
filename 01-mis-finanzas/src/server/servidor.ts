@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { CasosUso } from "../app/casos-uso";
-import type { Categoria } from "../domain/tipos";
+import type { Categoria, EntradaGasto } from "../domain/tipos";
 import type { Resultado } from "../domain/resultado";
 import { respuestaDeError } from "./errores-http";
 
@@ -56,7 +56,63 @@ async function atender(
     }
   }
 
+  // POST /api/presupuestos/{destino}/copiar-de/{origen}
+  if (
+    metodo === "POST" &&
+    partes[0] === "api" &&
+    partes[1] === "presupuestos" &&
+    partes[3] === "copiar-de" &&
+    partes.length === 5
+  ) {
+    const destino = decodeURIComponent(partes[2] ?? "");
+    const origen = decodeURIComponent(partes[4] ?? "");
+    return conResultado(
+      respuesta,
+      await casos.copiarLimites(destino, origen),
+      200,
+      (valor) => ({ categorias: valor }),
+    );
+  }
+
+  if (partes[0] === "api" && partes[1] === "gastos") {
+    // POST /api/gastos
+    if (metodo === "POST" && partes.length === 2) {
+      return conResultado(
+        respuesta,
+        await casos.registrarGasto(entradaGastoDelCuerpo(cuerpo)),
+        201,
+        (valor) => valor,
+      );
+    }
+    // GET /api/gastos?mes=YYYY-MM
+    if (metodo === "GET" && partes.length === 2) {
+      const mes = url.searchParams.get("mes") ?? "";
+      return conResultado(respuesta, await casos.listarGastos(mes), 200, (valor) => ({
+        gastos: valor,
+      }));
+    }
+    // DELETE /api/gastos/{id}
+    if (metodo === "DELETE" && partes.length === 3) {
+      const id = decodeURIComponent(partes[2] ?? "");
+      return conResultado(respuesta, await casos.borrarGasto(id), 204, () => undefined);
+    }
+  }
+
   return responder(respuesta, 404, { mensaje: "Recurso no encontrado." });
+}
+
+function entradaGastoDelCuerpo(cuerpo: unknown): EntradaGasto {
+  const objeto = (typeof cuerpo === "object" && cuerpo !== null ? cuerpo : {}) as Record<
+    string,
+    unknown
+  >;
+  const entrada: EntradaGasto = {
+    categoria: typeof objeto.categoria === "string" ? objeto.categoria : "",
+    monto: typeof objeto.monto === "number" ? objeto.monto : Number.NaN,
+    fecha: typeof objeto.fecha === "string" ? objeto.fecha : "",
+  };
+  if (typeof objeto.descripcion === "string") entrada.descripcion = objeto.descripcion;
+  return entrada;
 }
 
 function categoriasDelCuerpo(cuerpo: unknown): Categoria[] {

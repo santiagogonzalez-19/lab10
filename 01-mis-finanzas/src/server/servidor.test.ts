@@ -140,3 +140,120 @@ describe("servidor — errores y rutas de presupuesto", () => {
     expect(sano.status).toBe(200);
   });
 });
+
+describe("servidor — rutas de copiar y de gastos", () => {
+  it("CP62 — POST /api/presupuestos/2026-08/copiar-de/2026-07 con destino vacío → 200 con las copiadas", async () => {
+    const base = await levantarServidor(datosConJulio);
+    const respuesta = await fetch(`${base}/api/presupuestos/2026-08/copiar-de/2026-07`, {
+      method: "POST",
+    });
+    expect(respuesta.status).toBe(200);
+    expect(await respuesta.json()).toEqual({
+      categorias: [
+        { nombre: "Comida", limite: 500000 },
+        { nombre: "Ocio", limite: 150000 },
+      ],
+    });
+  });
+
+  it("CP63 — el mismo POST con destino poblado → 409", async () => {
+    const base = await levantarServidor({
+      ...datosConJulio,
+      presupuestos: {
+        ...datosConJulio.presupuestos,
+        "2026-08": [{ nombre: "Comida", limite: 100000 }],
+      },
+    });
+    const respuesta = await fetch(`${base}/api/presupuestos/2026-08/copiar-de/2026-07`, {
+      method: "POST",
+    });
+    expect(respuesta.status).toBe(409);
+    const cuerpo = (await respuesta.json()) as { codigo: string };
+    expect(cuerpo.codigo).toBe("DESTINO_NO_VACIO");
+  });
+
+  it("CP64 — POST /api/gastos que excede → 201 con el gasto y estado 'excedido' con el monto excedido", async () => {
+    const base = await levantarServidor(datosConJulio);
+    const respuesta = await fetch(`${base}/api/gastos`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        categoria: "Ocio",
+        monto: 140000,
+        fecha: "2026-07-15",
+        descripcion: "concierto",
+      }),
+    });
+    expect(respuesta.status).toBe(201);
+    const cuerpo = (await respuesta.json()) as {
+      gasto: Record<string, unknown>;
+      consumo: Record<string, unknown>;
+    };
+    expect(cuerpo.gasto).toMatchObject({
+      categoria: "Ocio",
+      monto: 140000,
+      fecha: "2026-07-15",
+      mes: "2026-07",
+      descripcion: "concierto",
+    });
+    // 20000 previos + 140000 = 160000 sobre límite 150000: excedido en 10000.
+    expect(cuerpo.consumo).toMatchObject({ estado: "excedido", excedido: 10000 });
+  });
+
+  it("CP65 — POST /api/gastos en categoría sin presupuesto en el mes de la fecha → 400", async () => {
+    const base = await levantarServidor(datosConJulio);
+    const respuesta = await fetch(`${base}/api/gastos`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ categoria: "Ocio", monto: 1000, fecha: "2026-06-15" }),
+    });
+    expect(respuesta.status).toBe(400);
+    const cuerpo = (await respuesta.json()) as { codigo: string };
+    expect(cuerpo.codigo).toBe("CATEGORIA_SIN_PRESUPUESTO");
+  });
+
+  it("CP68 — GET /api/gastos?mes=2026-07 → 200 en orden descendente y solo julio", async () => {
+    const base = await levantarServidor({
+      version: 1,
+      presupuestos: {
+        "2026-06": [{ nombre: "Comida", limite: 500000 }],
+        "2026-07": [{ nombre: "Comida", limite: 500000 }],
+      },
+      gastos: [
+        { id: "g1", mes: "2026-07", categoria: "Comida", monto: 1000, fecha: "2026-07-05", descripcion: "" },
+        { id: "g2", mes: "2026-06", categoria: "Comida", monto: 2000, fecha: "2026-06-20", descripcion: "" },
+        { id: "g3", mes: "2026-07", categoria: "Comida", monto: 3000, fecha: "2026-07-18", descripcion: "" },
+      ],
+    });
+    const respuesta = await fetch(`${base}/api/gastos?mes=2026-07`);
+    expect(respuesta.status).toBe(200);
+    const cuerpo = (await respuesta.json()) as { gastos: { id: string }[] };
+    expect(cuerpo.gastos.map((g) => g.id)).toEqual(["g3", "g1"]);
+    // R6.1: cada gasto viaja con todos sus campos, no solo el id.
+    expect(cuerpo.gastos[0]).toEqual({
+      id: "g3",
+      mes: "2026-07",
+      categoria: "Comida",
+      monto: 3000,
+      fecha: "2026-07-18",
+      descripcion: "",
+    });
+  });
+
+  it("CP69 — DELETE /api/gastos/{id} existente y luego GET del mes → 204 y el consumo ya no lo cuenta", async () => {
+    const base = await levantarServidor(datosConJulio);
+    const borrado = await fetch(`${base}/api/gastos/g1`, { method: "DELETE" });
+    expect(borrado.status).toBe(204);
+    const mes = await fetch(`${base}/api/presupuestos/2026-07`);
+    const cuerpo = (await mes.json()) as { categorias: { categoria: string; gastado: number }[] };
+    expect(cuerpo.categorias.find((c) => c.categoria === "Ocio")?.gastado).toBe(0);
+  });
+
+  it("CP71 — DELETE /api/gastos/no-existe → 404", async () => {
+    const base = await levantarServidor(datosConJulio);
+    const respuesta = await fetch(`${base}/api/gastos/no-existe`, { method: "DELETE" });
+    expect(respuesta.status).toBe(404);
+    const cuerpo = (await respuesta.json()) as { codigo: string };
+    expect(cuerpo.codigo).toBe("GASTO_NO_EXISTE");
+  });
+});

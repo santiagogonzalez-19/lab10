@@ -509,7 +509,7 @@ CP60 y CP61 juntos son la prueba de D5: el mismo `PUT` devuelve `400` o `409` se
 
 ### T17 — Servidor HTTP: rutas de copiar y de gastos
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -525,13 +525,16 @@ CP64 es el requisito estrella visto de punta a punta: el aviso de exceso viaja e
 
 *Hecho cuando:*
 
-- [ ] CP62, CP63, CP64, CP65, CP68, CP69 y CP71 fallan porque las rutas no existen
-- [ ] Los siete pasan, y las seis rutas del diseño responden
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP62, CP63, CP64, CP65, CP68, CP69 y CP71 fallan porque las rutas no existen
+- [x] Los siete pasan, y las seis rutas del diseño responden
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (los siete CP fallan: las rutas devolvían el 404 del pipeline de T16) y verde agregando las cuatro rutas restantes sobre el mismo enrutado por partes: `POST .../copiar-de/...` → 200 `{ categorias }`, `POST /api/gastos` → 201 `{ gasto, consumo }` (el aviso de exceso viaja en la respuesta del POST — CP64 lo clava con 20 000 previos + 140 000 = excedido 10 000), `GET /api/gastos?mes=` → 200 `{ gastos }`, `DELETE /api/gastos/{id}` → 204 sin cuerpo. El mapeo de errores es el de T16, sin tocar: CP63 (409), CP65 (400) y CP71 (404) salen solos del `Record` exhaustivo.
+- 2026-08-19 — CP68 se sembró con gastos de dos meses, así que verifica a la vez el orden descendente y que junio no se filtra — cierra también la observación que el verificador de T16 dejó sobre CP66 (el filtrado por mes de punta a punta ahora sí tiene test HTTP que puede fallar).
+- 2026-08-19 — T17-D1: el cuerpo del `POST /api/gastos` se traduce a `EntradaGasto` con defaults tipados (`categoria`/`fecha` faltantes → `""`, `monto` no numérico → `NaN`), y esos defaults caen solos en los rechazos del dominio (`FECHA_INVALIDA`, `MONTO_NO_ENTERO`). Igual que T16-D1: la capa HTTP no inventa errores propios para cuerpos malformados.
+- 2026-08-19 — Observación del verificador atendida: CP68 aseveraba solo los ids, con lo que un servidor que proyectara la lista sin los demás campos pasaba igual (R6.1 pide «todos sus campos»). Se agregó la aserción del objeto completo sobre el primer gasto de la respuesta. Suite en verde (95 tests).
 
 ### T18 — Blindar la pureza del dominio con una prueba estructural
 
@@ -776,6 +779,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T14-D1 | T14 | El tipo `CasosUso` se declara parcial en T14 y se completa en T15, sin stubs (ver bitácora T14) | 2026-08-19 |
 | T15-D1 | T15 | El caso de uso elige el presupuesto con `fecha.slice(0, 7)` sin pre-validar: el dominio valida la fecha primero (ver bitácora T15) | 2026-08-19 |
 | T16-D1 | T16 | El `PUT` de presupuestos usa `{ categorias }` en ambos sentidos; cuerpo sin esa clave = lista vacía, sin error HTTP nuevo (ver bitácora T16) | 2026-08-19 |
+| T17-D1 | T17 | El cuerpo del `POST /api/gastos` se traduce con defaults tipados que caen en los rechazos del dominio (ver bitácora T17) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
