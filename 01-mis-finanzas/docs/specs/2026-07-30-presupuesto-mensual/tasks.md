@@ -523,7 +523,7 @@ CP64 es el requisito estrella visto de punta a punta: el aviso de exceso viaja e
 
 ### T18 — Blindar la pureza del dominio con una prueba estructural
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -541,13 +541,14 @@ El escaneo excluye `*.test.ts`, y no es un detalle: `pureza.test.ts` vive en `sr
 
 *Hecho cuando:*
 
-- [ ] El test falla si se agrega a propósito un `import "node:fs"` en un archivo de producción del dominio (p. ej. `consumo.ts`)
-- [ ] Pasa con el dominio tal como quedó en T1–T11, sin marcar ningún `*.test.ts` — empezando por el propio `pureza.test.ts`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] El test falla si se agrega a propósito un `import "node:fs"` en un archivo de producción del dominio (p. ej. `consumo.ts`)
+- [x] Pasa con el dominio tal como quedó en T1–T11, sin marcar ningún `*.test.ts` — empezando por el propio `pureza.test.ts`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — `pureza.test.ts` lee los `.ts` de producción de `src/domain/` (excluye `*.test.ts`, como el plan fija: él mismo importa `node:fs`) y falla ante `node:*`, `storage/`, `app/` o `server/`. Asevera además que la lista escaneada no está vacía, para que un glob roto no dé un verde hueco.
+- 2026-08-19 — El check del rojo forzado atrapó un hueco real: la primera versión solo detectaba `from "node:..."`, y el `import "node:fs"` por efecto —exactamente el que el plan pide plantar— pasaba de largo. Se ampliaron los patrones (import por efecto, `import()` dinámico, `require`, y cualquier cadena con `/storage/`, `/app/`, `/server/`). Rojo forzado verificado dos veces: `node:fs` en `consumo.ts` y un import de `../storage/` en `mes.ts`; ambos restaurados y la suite quedó en verde (51 tests).
 
 ### T19 — Arranque: cargar el archivo y levantar el servidor
 
