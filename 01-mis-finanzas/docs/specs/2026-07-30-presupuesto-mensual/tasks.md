@@ -207,7 +207,7 @@ CP19 es la atomicidad de R1.4 vista desde `fijarLimites`: el conjunto completo s
 
 ### T6 — Impedir quitar una categoría que tiene gastos
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -223,13 +223,14 @@ CP19 (la atomicidad de R1.4) vive en T5 y no acá: su rojo solo es incondicional
 
 *Hecho cuando:*
 
-- [ ] CP16 falla porque `fijarLimites`, tal como quedó en T5, reemplaza el conjunto sin contar los gastos de las categorías que desaparecen
-- [ ] CP16 y CP17 pasan: el rechazo trae el nombre y el conteo en el detalle, y quitar una categoría sin gastos sigue permitido
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP16 falla porque `fijarLimites`, tal como quedó en T5, reemplaza el conjunto sin contar los gastos de las categorías que desaparecen
+- [x] CP16 y CP17 pasan: el rechazo trae el nombre y el conteo en el detalle, y quitar una categoría sin gastos sigue permitido
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo exactamente como el plan lo predijo: CP16 falló contra el `fijarLimites` de T5 (reemplazaba sin contar) y CP17 ya llegaba verde — quedó como contracara que impide sobre-prohibir. Verde agregando el conteo de gastos de cada categoría que desaparece, comparando por nombre normalizado (T2), y devolviendo `CATEGORIA_CON_GASTOS` con `{ categoria, gastos }` en el detalle y el nombre tal como está en el presupuesto.
+- 2026-08-19 — El conteo corre después de `validarCategorias`: un conjunto malformado se rechaza por su propio motivo antes de mirar los gastos, con lo que el orden de errores queda igual que en T5 y CP19 no cambia de significado.
 
 ### T7 — Copiar los límites de un mes a otro
 

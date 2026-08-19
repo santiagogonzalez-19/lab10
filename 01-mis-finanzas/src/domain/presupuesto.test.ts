@@ -49,6 +49,54 @@ describe("fijarLimites", () => {
     expect(resultado).toEqual({ ok: true, valor: [] });
   });
 
+  it("CP16 — quitar 'Ocio' con 2 gastos → CATEGORIA_CON_GASTOS con { categoria: 'Ocio', gastos: 2 }", () => {
+    const actuales: Categoria[] = [
+      { nombre: "Comida", limite: 500000 },
+      { nombre: "Ocio", limite: 150000 },
+    ];
+    const gastosDelMes: Gasto[] = [
+      {
+        id: "g1",
+        mes: "2026-07",
+        categoria: "Ocio",
+        monto: 20000,
+        fecha: "2026-07-05",
+        descripcion: "",
+      },
+      {
+        id: "g2",
+        mes: "2026-07",
+        categoria: "Ocio",
+        monto: 35000,
+        fecha: "2026-07-12",
+        descripcion: "cine",
+      },
+    ];
+    const resultado = fijarLimites(
+      actuales,
+      [{ nombre: "Comida", limite: 500000 }],
+      gastosDelMes,
+    );
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) {
+      expect(resultado.error.codigo).toBe("CATEGORIA_CON_GASTOS");
+      expect(resultado.error.detalle).toEqual({ categoria: "Ocio", gastos: 2 });
+    }
+  });
+
+  it("CP17 — quitar 'Ocio' sin gastos → se elimina", () => {
+    const actuales: Categoria[] = [
+      { nombre: "Comida", limite: 500000 },
+      { nombre: "Ocio", limite: 150000 },
+    ];
+    const resultado = fijarLimites(
+      actuales,
+      [{ nombre: "Comida", limite: 500000 }],
+      sinGastos,
+    );
+    expect(resultado).toEqual({ ok: true, valor: [{ nombre: "Comida", limite: 500000 }] });
+  });
+
   it("CP19 — lista de 3 con la 3.ª de límite negativo → error y las 2 primeras no se aplican", () => {
     const resultado = fijarLimites(
       [],
