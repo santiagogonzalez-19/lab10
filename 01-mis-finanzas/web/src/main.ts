@@ -1,7 +1,22 @@
 // Conecta los eventos de la pantalla con la API y la vista.
 
-import { copiarLimites, fijarLimites, verMes, type VistaMes } from "./api";
-import { dibujarEditor, dibujarError, dibujarErrorDeEditor, dibujarMes } from "./vista";
+import {
+  copiarLimites,
+  fijarLimites,
+  registrarGasto,
+  verMes,
+  type EntradaGasto,
+  type VistaMes,
+} from "./api";
+import {
+  dibujarAvisoDeGasto,
+  dibujarEditor,
+  dibujarError,
+  dibujarErrorDeEditor,
+  dibujarErrorDeGasto,
+  dibujarFormularioGasto,
+  dibujarMes,
+} from "./vista";
 
 const selector = document.querySelector<HTMLInputElement>("#selector-mes");
 const contenido = document.querySelector<HTMLElement>("#contenido");
@@ -24,6 +39,37 @@ async function cargarMes(mes: string): Promise<void> {
     alCopiar: (origen) => void copiar(mes, origen),
     alEditar: () => abrirEditor(mes, resultado.valor),
   });
+  if (resultado.valor.categorias.length > 0) {
+    dibujarFormularioGasto(
+      raiz,
+      resultado.valor.categorias.map((c) => c.categoria),
+      { alRegistrar: (entrada) => void registrar(mes, entrada) },
+    );
+  }
+}
+
+async function registrar(mesEnPantalla: string, entrada: EntradaGasto): Promise<void> {
+  const resultado = await registrarGasto(entrada);
+  if (!resultado.ok) {
+    // «Defínelo primero»: el 400 de R3.3 enlaza a la pantalla de límites (T23)
+    // del MES DE LA FECHA del gasto, que es donde falta el límite.
+    const mesDeLaFecha = entrada.fecha.slice(0, 7);
+    dibujarErrorDeGasto(raiz, resultado.error, () => void editarLimitesDe(mesDeLaFecha));
+    return;
+  }
+  await cargarMes(mesEnPantalla); // las barras se actualizan
+  dibujarAvisoDeGasto(raiz, resultado.valor.consumo); // el aviso, de la respuesta del POST
+}
+
+async function editarLimitesDe(mes: string): Promise<void> {
+  const resultado = await verMes(mes);
+  if (!resultado.ok) {
+    raiz.replaceChildren();
+    dibujarError(raiz, resultado.error);
+    return;
+  }
+  if (selector) selector.value = mes;
+  abrirEditor(mes, resultado.valor);
 }
 
 function abrirEditor(mes: string, vista: VistaMes): void {

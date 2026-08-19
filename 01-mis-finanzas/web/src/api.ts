@@ -70,3 +70,29 @@ export function fijarLimites(
     body: JSON.stringify({ categorias }),
   });
 }
+
+export type Gasto = {
+  id: string;
+  mes: string;
+  categoria: string;
+  monto: number;
+  fecha: string;
+  descripcion: string;
+};
+
+export type EntradaGasto = {
+  categoria: string;
+  monto: number;
+  fecha: string;
+  descripcion?: string;
+};
+
+export type GastoRegistrado = { gasto: Gasto; consumo: ConsumoCategoria };
+
+export function registrarGasto(entrada: EntradaGasto): Promise<Respuesta<GastoRegistrado>> {
+  return pedir("/api/gastos", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(entrada),
+  });
+}

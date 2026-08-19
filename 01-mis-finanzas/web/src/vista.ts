@@ -1,7 +1,7 @@
 // Dibuja el mes. La vista no reordena, no calcula estados ni porcentajes:
 // muestra lo que la API devuelve (D6, riesgo de design.md §10).
 
-import type { Categoria, ConsumoCategoria, ErrorApi, VistaMes } from "./api";
+import type { Categoria, ConsumoCategoria, EntradaGasto, ErrorApi, VistaMes } from "./api";
 
 const pesos = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -207,4 +207,101 @@ export function dibujarError(raiz: HTMLElement, error: ErrorApi): void {
   parrafo.className = "mensaje-error";
   parrafo.textContent = error.mensaje;
   raiz.append(parrafo);
+}
+
+export type AccionesDeGasto = {
+  alRegistrar: (entrada: EntradaGasto) => void;
+};
+
+// Formulario de registro (T21). El select ofrece las categorías del mes en
+// pantalla como comodidad; la que manda es la del mes de la FECHA (R3.2), y
+// el rechazo de esa regla llega de la API, no se anticipa acá.
+export function dibujarFormularioGasto(
+  raiz: HTMLElement,
+  categorias: string[],
+  acciones: AccionesDeGasto,
+): void {
+  const seccion = document.createElement("section");
+  seccion.className = "form-gasto";
+  const titulo = document.createElement("h2");
+  titulo.textContent = "Registrar un gasto";
+
+  const fecha = document.createElement("input");
+  fecha.type = "date";
+  fecha.className = "campo-fecha";
+  fecha.value = new Date().toISOString().slice(0, 10);
+
+  const categoria = document.createElement("select");
+  categoria.className = "campo-categoria";
+  for (const nombre of categorias) {
+    const opcion = document.createElement("option");
+    opcion.value = nombre;
+    opcion.textContent = nombre;
+    categoria.append(opcion);
+  }
+
+  const monto = document.createElement("input");
+  monto.type = "number";
+  monto.className = "campo-monto";
+  monto.placeholder = "Monto";
+
+  const descripcion = document.createElement("input");
+  descripcion.className = "campo-descripcion";
+  descripcion.placeholder = "Descripción (opcional)";
+
+  const boton = document.createElement("button");
+  boton.textContent = "Registrar";
+  boton.addEventListener("click", () => {
+    acciones.alRegistrar({
+      categoria: categoria.value,
+      monto: Number(monto.value),
+      fecha: fecha.value,
+      ...(descripcion.value !== "" ? { descripcion: descripcion.value } : {}),
+    });
+  });
+
+  const fila = document.createElement("div");
+  fila.className = "fila-editor";
+  fila.append(fecha, categoria, monto, descripcion, boton);
+  seccion.append(titulo, fila);
+  raiz.append(seccion);
+}
+
+// El aviso sale de la respuesta del POST (CP64): sin segunda petición.
+export function dibujarAvisoDeGasto(raiz: HTMLElement, consumo: ConsumoCategoria): void {
+  raiz.querySelectorAll(".aviso-gasto").forEach((previo) => previo.remove());
+  const aviso = document.createElement("p");
+  aviso.className = "aviso-gasto";
+  if (consumo.estado === "excedido") {
+    aviso.classList.add("aviso-excedido");
+    aviso.textContent = `«${consumo.categoria}» quedó excedida en ${formatearPesos(consumo.excedido)}.`;
+  } else if (consumo.estado === "alerta") {
+    aviso.classList.add("aviso-alerta");
+    aviso.textContent = `«${consumo.categoria}» está en alerta: ${consumo.porcentaje} % del límite.`;
+  } else {
+    aviso.textContent = `Gasto registrado en «${consumo.categoria}»: ${consumo.porcentaje} % del límite.`;
+  }
+  raiz.prepend(aviso);
+}
+
+// R3.3 en pantalla: el 400 de categoría sin presupuesto trae la salida
+// «Defínelo primero», que lleva a la pantalla de límites (T23).
+export function dibujarErrorDeGasto(
+  raiz: HTMLElement,
+  error: ErrorApi,
+  alDefinirLimites?: () => void,
+): void {
+  raiz.querySelectorAll(".mensaje-error").forEach((previo) => previo.remove());
+  // Un aviso de un registro anterior no debe convivir con el error del nuevo.
+  raiz.querySelectorAll(".aviso-gasto").forEach((previo) => previo.remove());
+  const parrafo = document.createElement("p");
+  parrafo.className = "mensaje-error";
+  parrafo.textContent = error.mensaje;
+  if (error.codigo === "CATEGORIA_SIN_PRESUPUESTO" && alDefinirLimites) {
+    const definir = document.createElement("button");
+    definir.textContent = "Definir el límite";
+    definir.addEventListener("click", alDefinirLimites);
+    parrafo.append(" ", definir);
+  }
+  raiz.querySelector(".form-gasto")?.append(parrafo);
 }

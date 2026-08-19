@@ -624,7 +624,7 @@ Si al implementar aparece la necesidad de calcular algo en la vista, es señal d
 
 ### T21 — UI: registrar un gasto con aviso de exceso
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -640,14 +640,17 @@ Extiende `web/src/api.ts` —que T20 crea solo con las rutas de presupuesto— c
 
 *Hecho cuando:*
 
-- [ ] El formulario registra un gasto y las barras de consumo del mes se actualizan
-- [ ] Un gasto que excede muestra el aviso con el monto sobrepasado, tomado de la respuesta del `POST`
-- [ ] Un gasto en una categoría sin presupuesto en el mes de su fecha muestra el mensaje del `400` con un enlace a la pantalla de límites de T23; un monto inválido (cero, negativo o con decimales) muestra su propio mensaje del `400`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] El formulario registra un gasto y las barras de consumo del mes se actualizan
+- [x] Un gasto que excede muestra el aviso con el monto sobrepasado, tomado de la respuesta del `POST`
+- [x] Un gasto en una categoría sin presupuesto en el mes de su fecha muestra el mensaje del `400` con un enlace a la pantalla de límites de T23; un monto inválido (cero, negativo o con decimales) muestra su propio mensaje del `400`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — `api.ts` extendida con `registrarGasto` (`POST /api/gastos`, verificado en CP64/CP65) y los tipos `Gasto`/`EntradaGasto`/`GastoRegistrado` del contrato. El formulario (fecha, categoría de las del mes en pantalla, monto, descripción opcional) se dibuja bajo la vista del mes cuando hay presupuesto; el aviso (`dibujarAvisoDeGasto`) sale del `consumo` de la respuesta del `POST`, sin segunda petición (T17); las barras se refrescan con `cargarMes`.
+- 2026-08-19 — Verificación manual en navegador real (los 4 checks): (1) gasto Transporte/50 000 → aviso «Gasto registrado…, 25 %» y la barra pasó de $0 a $50 000; (2) gasto de 200 000 → «"Transporte" quedó excedida en $ 50.000.» con estilo de exceso — el monto sale de la respuesta; (3) gasto con fecha 2026-05 (mes sin esa categoría) → «"Comida" no tiene presupuesto en 2026-05. Defínelo primero.» con el botón «Definir el límite», que abre el editor de T23 en 2026-05 (verificado: título «Límites de 2026-05» y selector sincronizado); monto -100 → «El monto debe ser mayor que cero.» sin enlace; (4) typecheck y suite en verde.
+- 2026-08-19 — T21-D1: el enlace del 400 de R3.3 abre el editor del **mes de la fecha del gasto** (`fecha.slice(0, 7)`), no del mes en pantalla: el límite falta en aquel mes, y la pantalla de T23 es una sola parametrizada por mes. El select del formulario ofrece las categorías del mes en pantalla como comodidad; la imputación real es del mes de la fecha (R3.2) y su rechazo llega de la API.
+- 2026-08-19 — Observaciones del verificador atendidas: `web/index.html` ganó 7 líneas de CSS para `.form-gasto` y `.aviso-gasto` (presentación pura, no estaba en los archivos previstos — queda registrado); y `dibujarErrorDeGasto` ahora limpia también el `.aviso-gasto` de un registro anterior, para que un aviso viejo no conviva con el error de un intento nuevo fallido.
 
 ### T22 — UI: listar los gastos del mes y borrar uno
 
@@ -792,6 +795,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T20-D2 | T20 | `web/src/api.ts` declara sus propios tipos del contrato JSON, sin importar `src/domain` (ver bitácora T20) | 2026-08-19 |
 | T20-D3 | T20 | `mesAnterior` vive en la vista: aritmética de calendario que la API no ofrece, con el borde de enero verificado (ver bitácora T20) | 2026-08-19 |
 | T23-D1 | T23 | El editor manda `Number(campo)` sin validar en la vista; campo vacío → `0`, que el dominio acepta (R1.3) — corregida, ver bitácora T23 | 2026-08-19 |
+| T21-D1 | T21 | El enlace «Defínelo primero» abre el editor del mes de la fecha del gasto, no del mes en pantalla (ver bitácora T21) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
