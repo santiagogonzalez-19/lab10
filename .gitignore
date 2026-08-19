@@ -19,3 +19,7 @@ coverage/
 
 # Datos del usuario (datos/finanzas.json, escritos por RepositorioArchivo — T13)
 datos/
+
+# Artefactos de verificacion manual con Playwright MCP
+.playwright-mcp/
+**/.playwright-mcp/

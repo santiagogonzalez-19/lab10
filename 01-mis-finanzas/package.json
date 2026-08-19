@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p web --noEmit",
     "test": "vitest run",
-    "start": "vite-node src/main.ts"
+    "start": "vite-node src/main.ts",
+    "dev": "vite"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

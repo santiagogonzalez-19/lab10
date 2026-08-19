@@ -594,7 +594,7 @@ El escaneo excluye `*.test.ts`, y no es un detalle: `pureza.test.ts` vive en `sr
 
 ### T20 — UI: ver el mes y arrancarlo copiando el anterior
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -610,14 +610,17 @@ Si al implementar aparece la necesidad de calcular algo en la vista, es señal d
 
 *Hecho cuando:*
 
-- [ ] El selector de mes carga las categorías con su barra de consumo y el color de su estado, en el orden en que la API las devuelve — la vista no reordena
-- [ ] Un mes sin presupuesto muestra el estado vacío y ofrece copiar el mes anterior; al copiar, las categorías del origen aparecen con sus límites; si el destino ya tiene límites, se muestra el mensaje del `409`
-- [ ] Una categoría excedida se distingue a simple vista y muestra el monto sobrepasado
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] El selector de mes carga las categorías con su barra de consumo y el color de su estado, en el orden en que la API las devuelve — la vista no reordena
+- [x] Un mes sin presupuesto muestra el estado vacío y ofrece copiar el mes anterior; al copiar, las categorías del origen aparecen con sus límites; si el destino ya tiene límites, se muestra el mensaje del `409`
+- [x] Una categoría excedida se distingue a simple vista y muestra el monto sobrepasado
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Andamiaje de `web/` creado: `index.html` (estilos y layout), `api.ts` (solo `verMes` y `copiarLimites` — las rutas de presupuesto, como el plan fija), `vista.ts` (dibuja tarjetas con barra, color por `estado-{ok,alerta,excedido}` y estado vacío con botón de copiar), `main.ts` (selector de mes y eventos), `vite.config.ts` (root `web/`, proxy `/api` → `localhost:3000`) y script `dev`. La vista no calcula nada: ancho de barra = `min(100, porcentaje)` recibido, estados y montos vienen de la API (D6, §10).
+- 2026-08-19 — Verificación manual hecha en navegador real (Playwright headless contra `npm start` + `npm run dev`): (1) mes vacío 2026-08 mostró el estado vacío y su botón «Copiar los límites de 2026-07»; al clickear, las 3 categorías de julio aparecieron con sus límites y $0 gastado; (2) julio mostró Comida `alerta` (84 %), Ocio `excedido` con «Excedido en $ 30.000 · 120 %», Transporte `ok`, en el orden de la API; (3) el 409 se probó sembrando límites en 2026-09 por detrás de la pantalla y clickeando copiar: apareció «2026-09 ya tiene límites definidos.».
+- 2026-08-19 — T20-D1: `web/` tiene su propio `tsconfig.json` (lib DOM) y `npm run typecheck` ahora corre los dos proyectos (`tsc --noEmit && tsc -p web --noEmit`): el dominio no gana los globals del DOM y la UI queda tipada. T20-D2: `web/src/api.ts` declara sus propios tipos del contrato JSON en vez de importar `src/domain/tipos`: web/ habla con la API por HTTP (§2) y un import cruzado, aunque sea de tipos, acoplaría el cliente al layout del servidor.
+- 2026-08-19 — Observaciones del verificador atendidas. T20-D3: `mesAnterior` vive en la vista y es aritmética de calendario (con el borde enero → diciembre) — la API no ofrece «el mes anterior» y no es estado/porcentaje/umbral (§10); el borde se verificó en el navegador: 2027-01 ofrece «Copiar los límites de 2026-12». `dibujarError` ahora reemplaza el mensaje anterior en vez de apilarlo en clicks repetidos. `.playwright-mcp/` (artefacto de la verificación manual) entra al `.gitignore` de la raíz.
 
 ### T21 — UI: registrar un gasto con aviso de exceso
 
@@ -782,6 +785,9 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T16-D1 | T16 | El `PUT` de presupuestos usa `{ categorias }` en ambos sentidos; cuerpo sin esa clave = lista vacía, sin error HTTP nuevo (ver bitácora T16) | 2026-08-19 |
 | T17-D1 | T17 | El cuerpo del `POST /api/gastos` se traduce con defaults tipados que caen en los rechazos del dominio (ver bitácora T17) | 2026-08-19 |
 | T19-D1 | T19 | `npm start` corre con `vite-node` (transitiva de vitest), sin dependencias nuevas; config por `FINANZAS_DATOS`/`PORT` (ver bitácora T19) | 2026-08-19 |
+| T20-D1 | T20 | `web/` con `tsconfig` propio (lib DOM); `npm run typecheck` corre ambos proyectos (ver bitácora T20) | 2026-08-19 |
+| T20-D2 | T20 | `web/src/api.ts` declara sus propios tipos del contrato JSON, sin importar `src/domain` (ver bitácora T20) | 2026-08-19 |
+| T20-D3 | T20 | `mesAnterior` vive en la vista: aritmética de calendario que la API no ofrece, con el borde de enero verificado (ver bitácora T20) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
