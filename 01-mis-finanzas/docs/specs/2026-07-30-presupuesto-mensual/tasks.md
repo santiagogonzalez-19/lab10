@@ -4,8 +4,8 @@
 |---|---|
 | **Requisitos** | [requirements.md](./requirements.md) |
 | **Diseño** | [design.md](./design.md) |
-| **Estado del plan** | Borrador |
-| **Última actualización** | 2026-08-04 |
+| **Estado del plan** | Aprobado |
+| **Última actualización** | 2026-08-19 |
 
 ## 1. Cómo se mantiene este documento
 
@@ -37,31 +37,33 @@
 | T4 | Calcular el consumo de un mes completo | T1, T3 |
 | T5 | Fijar y reemplazar los límites de un mes | T2 |
 | T6 | Impedir quitar una categoría que tiene gastos | T5 |
-| T7 | Copiar los límites de un mes a otro | T2 |
+| T7 | Copiar los límites de un mes a otro | T1 |
 | T8 | Registrar un gasto válido | T1, T2 |
 | T9 | Rechazar los gastos inválidos | T8 |
 | T10 | Listar los gastos de un mes en orden | T1 |
 | T11 | Quitar un gasto | T10 |
+| T18 | Blindar la pureza del dominio con una prueba estructural | T4, T6, T7, T9, T11 |
 | T12 | Definir el contrato `Repositorio` y la implementación en memoria | T1 |
 | T13 | Persistir en un archivo JSON de forma atómica y tolerante | T12 |
 | T14 | Casos de uso de presupuesto: ver el mes, fijar límites, copiar | T4, T6, T7, T12 |
 | T15 | Casos de uso de gastos: registrar con aviso, listar, borrar | T9, T11, T14 |
 | T16 | Servidor HTTP: errores y rutas de presupuesto | T14 |
 | T17 | Servidor HTTP: rutas de copiar y de gastos | T15, T16 |
-| T18 | Blindar la pureza del dominio con una prueba estructural | T4, T11 |
 | T19 | Arranque: cargar el archivo y levantar el servidor | T13, T17 |
 | T20 | UI: ver el mes y arrancarlo copiando el anterior | T19 |
-| T21 | UI: registrar un gasto con aviso de exceso, listar y borrar | T20 |
+| T23 | UI: fijar y ajustar los límites del mes | T20 |
+| T21 | UI: registrar un gasto con aviso de exceso | T20, T23 |
+| T22 | UI: listar los gastos del mes y borrar uno | T20, T21 |
 
-**Qué obliga el orden.** T1 va primero porque nada compila sin `Resultado` ni los tipos, y porque valida el formato de mes y fecha que todo lo demás asume. T3 antes de T4 porque el consumo del mes es la agregación de lo que T3 calcula para una categoría. T6 después de T5 porque quitar una categoría es un caso de la misma función que fija los límites. T12 antes de T13 porque la batería de tests del contrato se escribe contra la implementación en memoria y luego se reusa contra la de archivo (CP58). T16 antes de T17 porque T16 monta el servidor y la traducción de errores que T17 solo extiende con más rutas. T19 antes de la UI porque hasta ahí no hay nada que un navegador pueda pedir.
+**Qué obliga el orden.** T1 va primero porque nada compila sin `Resultado` ni los tipos, y porque valida el formato de mes y fecha que todo lo demás asume. T3 antes de T4 porque el consumo del mes es la agregación de lo que T3 calcula para una categoría. T6 después de T5 porque quitar una categoría es un caso de la misma función que fija los límites. T12 antes de T13 porque la batería de tests del contrato se escribe contra la implementación en memoria y luego se reusa contra la de archivo (CP58). T16 antes de T17 porque T16 monta el servidor y la traducción de errores que T17 solo extiende con más rutas. T19 antes de la UI porque hasta ahí no hay nada que un navegador pueda pedir. T18 después de T4, T6, T7, T9 y T11 —las hojas del grafo del dominio, que arrastran transitivamente a T1–T11— porque su check «pasa con el dominio tal como quedó en T1–T11» no es verificable con el dominio a medias.
 
-**Qué elegí yo.** Que el dominio vaya completo (T1–T11) antes del almacenamiento y el transporte: son las once tareas que se prueban sin infraestructura y donde vive todo lo que el spec discutió. T3 y T4 antes de T5–T7 no es una dependencia técnica —fijar límites no necesita el cálculo del consumo— sino que el cálculo es el corazón del producto y prefiero tenerlo verde temprano. T18 podría ir en cualquier punto después de T4; la puse al cerrar el dominio para que falle si alguna de las once tareas metió una importación indebida. T20 antes de T21 para que la primera cosa demostrable en pantalla sea ver un mes, no registrar.
+**Qué elegí yo.** Que el dominio vaya completo (T1–T11) antes del almacenamiento y el transporte: son las once tareas que se prueban sin infraestructura y donde vive todo lo que el spec discutió. T3 y T4 antes de T5–T7 no es una dependencia técnica —fijar límites no necesita el cálculo del consumo— sino que el cálculo es el corazón del producto y prefiero tenerlo verde temprano. T18 justo después de T11 y antes del almacenamiento no es una dependencia técnica —sus dependencias son T4, T6, T7, T9 y T11, y numéricamente podría esperar hasta después de T17— sino de conveniencia: ejecutado ahí, CP74 corre en el `npm test` de todas las tareas siguientes, y una importación indebida se detecta en la tarea que la introduce, no al final con todo el sistema encima. Es una elección, no una obligación, y el gate del plan la confirmó: T18 queda tras T11 y antes de T12. T20 antes de T21 para que la primera cosa demostrable en pantalla sea ver un mes, no registrar. T22 después de T21 no es una dependencia técnica —listar no necesita el formulario— sino de conveniencia: sin registrar desde la pantalla no hay qué listar ni qué borrar, y ambas tareas editan los mismos `vista.ts` y `main.ts`. T23 nació del diagnóstico de T21, con el plan todavía en borrador, y su única dependencia técnica sigue siendo T20, que crea el andamiaje de `web/`. El gate del plan resolvió su posición: T20 → T23 → T21 → T22. Va inmediatamente después de T20 y antes de T21 —no por numeración, la fila de §3 se movió para reflejarlo— porque es la única pantalla que permite crear el **primer** presupuesto: copiar (T20) exige un origen que sin T23 nadie pudo definir. T21 pasa a depender de T23 por conveniencia, no porque `registrarGasto` necesite la pantalla de límites para funcionar —le basta con que el mes tenga presupuesto, sin importar cómo llegó—, sino porque la affordance «Defínelo primero» del `400` de T21 (design.md, mapeo de errores) apunta a una pantalla que antes no existía: con T23 antes, esa acción tiene dónde llevar al usuario.
 
 ## 4. Tareas
 
 ### T1 — Levantar el proyecto y validar meses y fechas
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -81,18 +83,21 @@ El `.gitignore` de la raíz del repo perdió `node_modules/`, `dist/`, `coverage
 
 *Hecho cuando:*
 
-- [ ] `npm test` ejecuta y CP1–CP6 fallan por la razón esperada: `validarMes`, `validarFecha` y `mesDe` no existen
-- [ ] CP1–CP6 pasan, con `validarMes` y `validarFecha` devolviendo `Resultado` sin lanzar, y `mesDe` devolviendo `Mes` sobre una fecha ya validada
-- [ ] `git status` no lista `node_modules/` entre los archivos sin seguimiento
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] `npm test` ejecuta y CP1–CP6 fallan por la razón esperada: `validarMes`, `validarFecha` y `mesDe` no existen
+- [x] CP1–CP6 pasan, con `validarMes` y `validarFecha` devolviendo `Resultado` sin lanzar, y `mesDe` devolviendo `Mes` sobre una fecha ya validada
+- [x] `git status` no lista `node_modules/` entre los archivos sin seguimiento
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Andamiaje repuesto: `package.json` (scripts `typecheck` y `test`), `tsconfig.json` (strict, `noEmit`), `vitest.config.ts`, y las cuatro entradas perdidas del `.gitignore` de la raíz (`node_modules/`, `dist/`, `coverage/`, `*.tsbuildinfo`). `datos/` no se agregó, como el plan indica: es de T13.
+- 2026-08-19 — Rojo verificado: `npm test` corrió y CP1–CP6 fallaron porque `./mes` no existe (el andamiaje quedó demostrado por el propio rojo, sin ciclo aparte). Verde con `validarMes` y `validarFecha` devolviendo `Resultado` (D1, sin lanzar) y `mesDe` como `slice(0, 7)` sobre fecha ya validada (S2).
+- 2026-08-19 — T1-D1: la validación de calendario de CP5 se hace con una tabla de días por mes y regla de bisiestos propia, sin `Date`. `Date` acepta desbordes ("2026-02-30" → 2 de marzo) salvo que se re-compare el resultado, y la tabla deja la regla legible y determinista. `mes.ts` no importa `node:*` (NF4).
+- 2026-08-19 — En `resultado.ts` se agregaron los constructores `exito`/`fallo` además de los tipos del diseño §4: evitan repetir el literal `{ ok: ... }` en cada regla del dominio. No cambian el contrato.
 
 ### T2 — Normalizar nombres y validar el conjunto de categorías
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -108,17 +113,19 @@ El `.gitignore` de la raíz del repo perdió `node_modules/`, `dist/`, `coverage
 
 *Hecho cuando:*
 
-- [ ] CP7–CP12 fallan porque `normalizar` y `validarCategorias` no existen
-- [ ] CP7–CP12 pasan, y `validarCategorias` devuelve el primer error encontrado sin aplicar nada
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP7–CP12 fallan porque `normalizar` y `validarCategorias` no existen
+- [x] CP7–CP12 pasan, y `validarCategorias` devuelve el primer error encontrado sin aplicar nada
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (CP7–CP12 fallan porque `./categorias` no existe) y verde con `normalizar` = `trim().toLowerCase()` como única definición en el código, y `validarCategorias` recorriendo la lista en orden y devolviendo el primer error sin aplicar nada.
+- 2026-08-19 — T2-D1: el detalle de `NOMBRE_DUPLICADO` informa el nombre **tal como se escribió primero** (S1): con `"Comida"` y `" comida "`, el detalle dice `Comida`. El primer borrador devolvía el nombre del segundo (el que dispara el choque, ya en minúsculas por el trim) y CP8 lo atrapó.
+- 2026-08-19 — `buscarCategoria` entra en esta tarea porque design.md §4 la declara en `categorias.ts` y es la mitad "buscar por nombre normalizado" de R3.4. Su cobertura directa llega con CP29 en T8; acá queda tipada y compartiendo `normalizar` con la validación.
 
 ### T3 — Calcular el consumo de una categoría: estado, porcentaje y exceso
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -134,17 +141,18 @@ El corazón del producto. CP38 y CP39 clavan los dos bordes que el spec discuti�
 
 *Hecho cuando:*
 
-- [ ] CP36–CP42 y CP70 fallan porque `consumoDeCategoria` no existe
-- [ ] Los ocho pasan, con `UMBRAL_ALERTA` como parámetro con valor por defecto 80
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP36–CP42 y CP70 fallan porque `consumoDeCategoria` no existe
+- [x] Los ocho pasan, con `UMBRAL_ALERTA` como parámetro con valor por defecto 80
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (los ocho CP fallan porque `./consumo` no existe) y verde con el cálculo transcrito de design.md §5 sin reinterpretarlo: `restante = limite - gastado`, `excedido = max(0, gastado - limite)`, `porcentaje` con la convención de límite 0, y el umbral evaluado sobre el cociente sin redondear, que es lo que CP40 clava: con 399 800 el estado es `ok` aunque `porcentaje` muestre 80.
+- 2026-08-19 — `umbralAlerta` es parámetro con `UMBRAL_ALERTA = 80` como default (S5/Q3). El filtrado por categoría dentro de `consumoDeCategoria` compara `gasto.categoria === categoria.nombre` a secas: los gastos guardan el nombre canónico (D4), así que normalizar acá sería duplicar la frontera.
 
 ### T4 — Calcular el consumo de un mes completo
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -160,13 +168,14 @@ CP35 es el caso que protege BR7 desde el lado del cálculo: un gasto de junio no
 
 *Hecho cuando:*
 
-- [ ] CP34, CP35, CP43 y CP44 fallan porque `consumo` no existe
-- [ ] Los cuatro pasan, y `consumo` no reimplementa el cálculo: delega en `consumoDeCategoria`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP34, CP35, CP43 y CP44 fallan porque `consumo` no existe
+- [x] Los cuatro pasan, y `consumo` no reimplementa el cálculo: delega en `consumoDeCategoria`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado ("consumo is not a function" en los cuatro CP) y verde con `consumo` como un `map` sobre las categorías que delega en `consumoDeCategoria`, preservando el orden de definición (CP44) sin reordenar.
+- 2026-08-19 — CP35 se escribió asumiendo el contrato de design.md §4: `consumo` recibe `gastosDelMes` ya filtrados por el llamador (comparación de cadenas sobre el campo `mes`, D3). El test construye gastos de junio y julio, filtra como lo hará el caso de uso, y fija que el gastado de julio no ve los de junio. El filtrado de punta a punta lo re-verifica CP66 en T16.
 
 ### T5 — Fijar y reemplazar los límites de un mes
 
@@ -176,16 +185,18 @@ CP35 es el caso que protege BR7 desde el lado del cálculo: un gasto de junio no
 
 | | |
 |---|---|
-| **Requisitos** | R1.1, R1.2, R1.11, R5.8 (parcial), BR7 (parcial) |
-| **Casos de prueba** | CP13 fijar 3 categorías en un mes sin presupuesto → las 3 en el orden recibido · CP14 fijar límites en un mes que ya tenía otras → el conjunto queda reemplazado · CP15 fijar los de `2026-07` teniendo `2026-06` → junio intacto · CP18 lista vacía en un mes sin gastos → el mes queda sin presupuesto |
+| **Requisitos** | R1.1, R1.2, R1.4 (atomicidad), R1.11, R5.8 (parcial), BR7 (parcial) |
+| **Casos de prueba** | CP13 fijar 3 categorías en un mes sin presupuesto → las 3 en el orden recibido · CP14 fijar límites en un mes que ya tenía otras → el conjunto queda reemplazado · CP15 fijar los de `2026-07` teniendo `2026-06` → junio intacto · CP18 lista vacía en un mes sin gastos → el mes queda sin presupuesto · CP19 lista de 3 con la 3.ª de límite negativo → error y las 2 primeras **no** se aplican |
 | **Componente** | `presupuesto.fijarLimites` |
 | **Archivos previstos** | `src/domain/presupuesto.ts`, `src/domain/presupuesto.test.ts` |
 | **Decisiones que la condicionan** | D1, y `validarCategorias` de T2 (no se duplica la validación) |
 
+CP19 es la atomicidad de R1.4 vista desde `fijarLimites`: el conjunto completo se valida —delegando en `validarCategorias`, que devuelve el primer error sin aplicar nada— antes de producir resultado, así que un rechazo nunca deja un presupuesto a medio aplicar. Vive acá y no en T6 porque su rojo solo es incondicional mientras `fijarLimites` no existe: esta tarea deja implementada la delegación, y en T6 el caso llegaría verde sin ningún test que lo fuerce.
+
 *Hecho cuando:*
 
-- [ ] CP13, CP14, CP15 y CP18 fallan porque `fijarLimites` no existe
-- [ ] Los cuatro pasan, y el orden recibido se preserva en el resultado
+- [ ] CP13, CP14, CP15, CP18 y CP19 fallan porque `fijarLimites` no existe
+- [ ] Los cinco pasan: el orden recibido se preserva en el resultado y un rechazo no aplica ninguna categoría
 - [ ] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
@@ -200,18 +211,18 @@ CP35 es el caso que protege BR7 desde el lado del cálculo: un gasto de junio no
 
 | | |
 |---|---|
-| **Requisitos** | R1.8, R1.9, R1.4 (atomicidad), BR4 (parcial) |
-| **Casos de prueba** | CP16 quitar `"Ocio"` con 2 gastos → `CATEGORIA_CON_GASTOS` con `{ categoria: "Ocio", gastos: 2 }` · CP17 quitar `"Ocio"` sin gastos → se elimina · CP19 lista de 3 con la 3.ª de límite negativo → error y las 2 primeras **no** se aplican |
+| **Requisitos** | R1.8, R1.9, BR4 (parcial) |
+| **Casos de prueba** | CP16 quitar `"Ocio"` con 2 gastos → `CATEGORIA_CON_GASTOS` con `{ categoria: "Ocio", gastos: 2 }` · CP17 quitar `"Ocio"` sin gastos → se elimina |
 | **Componente** | `presupuesto.fijarLimites` |
 | **Archivos previstos** | `src/domain/presupuesto.ts`, `src/domain/presupuesto.test.ts` |
-| **Decisiones que la condicionan** | T2 (comparación por nombre normalizado al contar los gastos de la categoría que desaparece) |
+| **Decisiones que la condicionan** | T2 (comparación por nombre normalizado al contar los gastos de la categoría que desaparece), y T5 (misma función `fijarLimites`, que ya existe al empezar) |
 
-CP19 es el caso de atomicidad: `fijarLimites` valida todo el conjunto antes de devolver algo, así que un rechazo nunca deja un presupuesto a medio aplicar.
+CP19 (la atomicidad de R1.4) vive en T5 y no acá: su rojo solo es incondicional mientras `fijarLimites` no existe, y T5 deja la validación delegada en `validarCategorias`, con lo que en esta tarea el caso llegaría verde sin test que lo fuerce. CP17 es la contracara de CP16: fija que el bloqueo aplica solo cuando hay gastos, para que la implementación no termine prohibiendo quitar categorías en general.
 
 *Hecho cuando:*
 
-- [ ] CP16, CP17 y CP19 fallan: hoy la categoría se quitaría sin mirar los gastos
-- [ ] Los tres pasan, y el detalle del error trae el nombre y el conteo
+- [ ] CP16 falla porque `fijarLimites`, tal como quedó en T5, reemplaza el conjunto sin contar los gastos de las categorías que desaparecen
+- [ ] CP16 y CP17 pasan: el rechazo trae el nombre y el conteo en el detalle, y quitar una categoría sin gastos sigue permitido
 - [ ] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
@@ -230,7 +241,7 @@ CP19 es el caso de atomicidad: `fijarLimites` valida todo el conjunto antes de d
 | **Casos de prueba** | CP20 copiar 3 categorías a un mes vacío → las mismas 3 con los mismos límites · CP21 el origen tiene gastos → el destino queda sin gastos · CP22 destino con 1 categoría → `DESTINO_NO_VACIO` · CP23 origen sin categorías → `ORIGEN_SIN_PRESUPUESTO` · CP24 origen igual a destino → `MESES_IGUALES` · CP25 tras copiar, el origen queda idéntico |
 | **Componente** | `presupuesto.copiarLimites` |
 | **Archivos previstos** | `src/domain/presupuesto.ts`, `src/domain/presupuesto.test.ts` |
-| **Decisiones que la condicionan** | — |
+| **Decisiones que la condicionan** | D1 (design.md): los rechazos `DESTINO_NO_VACIO`, `ORIGEN_SIN_PRESUPUESTO` y `MESES_IGUALES` se devuelven como `Resultado`, no se lanzan |
 
 CP21 es el que hace visible que se copian límites y no historia: es la diferencia entre "arrancar agosto" y "duplicar julio".
 
@@ -383,10 +394,10 @@ La batería de CP58 se escribe **una vez** como una función que recibe una fáb
 | **Requisitos** | NF2, NF3, NF4 |
 | **Casos de prueba** | CP53 archivo inexistente → datos vacíos sin error · CP54 escribir y volver a leer → datos iguales · CP55 JSON inválido → lanza informando la ruta, y el archivo queda byte a byte igual · CP56 `version` desconocida → lanza sin sobrescribir · CP57 tras guardar, el directorio solo tiene `finanzas.json` · CP58 (segunda mitad) la batería del contrato pasa contra `RepositorioArchivo` |
 | **Componente** | `RepositorioArchivo` |
-| **Archivos previstos** | `src/storage/repositorio-archivo.ts`, `src/storage/repositorio-archivo.test.ts` |
+| **Archivos previstos** | `src/storage/repositorio-archivo.ts`, `src/storage/repositorio-archivo.test.ts`, `.gitignore` (raíz del repo: se agrega la entrada `datos/`) |
 | **Decisiones que la condicionan** | D8 (temporal + `rename`), y el riesgo de escrituras concurrentes de design.md §10 |
 
-CP55 es el caso que protege los datos del usuario: la tentación al implementar es arrancar con datos vacíos cuando el archivo no se puede leer, y eso los borra en el primer guardado. Los tests corren en un directorio temporal (`mkdtemp`). Incluye la cola que serializa las escrituras (§10 del diseño): sin ella dos guardados concurrentes se pisan.
+CP55 es el caso que protege los datos del usuario: la tentación al implementar es arrancar con datos vacíos cuando el archivo no se puede leer, y eso los borra en el primer guardado. Los tests corren en un directorio temporal (`mkdtemp`). Incluye la cola que serializa las escrituras (§10 del diseño): sin ella dos guardados concurrentes se pisan. También agrega `datos/` al `.gitignore` de la raíz del repo — T1 lo dejó explícitamente para esta tarea, que es la que introduce el código que escribe `datos/finanzas.json`; sin esa entrada, el archivo con los datos del usuario quedaría versionable.
 
 *Hecho cuando:*
 
@@ -406,18 +417,18 @@ CP55 es el caso que protege los datos del usuario: la tentación al implementar 
 
 | | |
 |---|---|
-| **Requisitos** | R5.7, y la atomicidad de persistencia de R1.4, R1.8, R2.3, R3.3 |
-| **Casos de prueba** | CP52 cualquier operación que falle en el dominio → el repositorio no recibe ninguna escritura · CP43 (vía `verMes`) mes sin presupuesto → `{ mes, categorias: [] }` sin error |
+| **Requisitos** | R5.7, y la atomicidad de persistencia de R1.4, R1.8, R2.3 |
+| **Casos de prueba** | CP52 (ramas R1.4, R1.8 y R2.3) una operación que falla en el dominio → el repositorio no recibe ninguna escritura · CP43 (vía `verMes`) mes sin presupuesto → `{ mes, categorias: [] }` sin error |
 | **Componente** | `casos-uso.verMes`, `casos-uso.fijarLimites`, `casos-uso.copiarLimites` |
 | **Archivos previstos** | `src/app/casos-uso.ts`, `src/app/casos-uso.test.ts` |
 | **Decisiones que la condicionan** | D2 (design.md): esta capa existe para poder probar la orquestación sin HTTP |
 
-CP52 se verifica con un `RepositorioMemoria` que cuente las escrituras: es la única forma de comprobar que un rechazo no dejó nada persistido, y cubre de una vez los cuatro caminos de error que llegan hasta esta capa.
+CP52 se verifica con un `RepositorioMemoria` que cuente las escrituras: es la única forma de comprobar que un rechazo no dejó nada persistido. Se escribe como un helper parametrizado por operación, y acá se ejercitan las tres ramas cuyas operaciones nacen en esta tarea (límite negativo en `fijarLimites`, categoría con gastos en `fijarLimites`, destino no vacío en `copiarLimites`). La cuarta rama de CP52 —el rechazo R3.3 de `registrarGasto`— la completa T15 reutilizando el mismo helper, porque `casos-uso.registrarGasto` nace allí y su rojo es inescribible en esta tarea.
 
 *Hecho cuando:*
 
-- [ ] CP52 y CP43-vía-`verMes` fallan porque los casos de uso no existen
-- [ ] Los dos pasan, y ninguna operación escribe cuando el dominio devuelve `ok: false`
+- [ ] CP52 (ramas R1.4, R1.8 y R2.3) y CP43-vía-`verMes` fallan porque los casos de uso no existen
+- [ ] Las tres ramas y CP43 pasan, y ninguna operación escribe cuando el dominio devuelve `ok: false`
 - [ ] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
@@ -432,18 +443,18 @@ CP52 se verifica con un `RepositorioMemoria` que cuente las escrituras: es la ú
 
 | | |
 |---|---|
-| **Requisitos** | R4.6, R6.4 |
-| **Casos de prueba** | CP45 registrar en `"Comida"` con `"Ocio"` también excedida → la respuesta trae el consumo **solo** de `"Comida"` · CP49 borrar un gasto y volver a pedir el consumo → el gastado de su categoría baja en el monto del gasto |
+| **Requisitos** | R4.6, R6.4, R3.3 (solo atomicidad de persistencia), R3.9 (parcial: acá se inyecta el `generarId` real) |
+| **Casos de prueba** | CP45 registrar en `"Comida"` con `"Ocio"` también excedida → la respuesta trae el consumo **solo** de `"Comida"` · CP49 borrar un gasto y volver a pedir el consumo → el gastado de su categoría baja en el monto del gasto · CP52 (rama R3.3) `registrarGasto` rechazado por el dominio → el repositorio no recibe ninguna escritura, reusando el helper y el `RepositorioMemoria` contador de escrituras de T14 |
 | **Componente** | `casos-uso.registrarGasto`, `casos-uso.listarGastos`, `casos-uso.borrarGasto` |
 | **Archivos previstos** | `src/app/casos-uso.ts`, `src/app/casos-uso.test.ts` |
 | **Decisiones que la condicionan** | D2, D9 (acá se inyecta `crypto.randomUUID`), y T14 (no escribir si el dominio rechaza) |
 
-CP45 es el criterio que hace que el aviso de exceso sea utilizable: la respuesta del registro trae el estado de la categoría afectada, y solo de ella. CP49 cierra el ciclo de la corrección: borrar tiene que verse en el consumo, no solo en la lista.
+CP45 es el criterio que hace que el aviso de exceso sea utilizable: la respuesta del registro trae el estado de la categoría afectada, y solo de ella. CP49 cierra el ciclo de la corrección: borrar tiene que verse en el consumo, no solo en la lista. La rama R3.3 de CP52 vive acá y no en T14 porque su rojo exige `casos-uso.registrarGasto`, que nace en esta tarea: T14 dejó el helper parametrizado por operación y esta tarea completa la cuarta rama reutilizándolo. R3.9 entra parcial por la mitad que design.md §8 asigna a `casos-uso`: acá se inyecta el `generarId` real (D9), y el check de que el `id` no se genera en el dominio es lo que lo verifica — la unicidad en sí quedó clavada por CP33 en T8. `listarGastos` no tiene CP propio y es deliberado: el filtrado y el orden viven en `gastosDeMes` (CP46–CP48, T10), este caso de uso solo lee y delega, y el recorrido de punta a punta lo verifica CP68 en T17.
 
 *Hecho cuando:*
 
-- [ ] CP45 y CP49 fallan porque los casos de uso de gastos no existen
-- [ ] Los dos pasan, y el `id` se genera acá y no en el dominio
+- [ ] CP45, CP49 y la rama R3.3 de CP52 fallan porque los casos de uso de gastos no existen
+- [ ] Los tres pasan, el `id` se genera acá y no en el dominio, `listarGastos` delega en `gastosDeMes` sin reordenar ni filtrar por su cuenta, y `registrarGasto` no escribe cuando el dominio devuelve `ok: false`
 - [ ] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
@@ -464,7 +475,7 @@ CP45 es el criterio que hace que el aviso de exceso sea utilizable: la respuesta
 | **Archivos previstos** | `src/server/servidor.ts`, `src/server/errores-http.ts`, `src/server/servidor.test.ts` |
 | **Decisiones que la condicionan** | D5 (reparto 400/409), D7 (`node:http` sin Express), D1 (el mapeo de códigos es exhaustivo y el compilador lo obliga) |
 
-CP60 y CP61 juntos son la prueba de D5: el mismo `PUT` devuelve `400` o `409` según si el problema está en lo que el usuario envió o en lo que ya tiene guardado. Los tests levantan el servidor real en puerto efímero (`listen(0)`) con `RepositorioMemoria`.
+CP60 y CP61 juntos son la prueba de D5: el mismo `PUT` devuelve `400` o `409` según si el problema está en lo que el usuario envió o en lo que ya tiene guardado. Los tests levantan el servidor real en puerto efímero (`listen(0)`) con `RepositorioMemoria`. CP73 se satisface parseando el JSON del cuerpo antes de enrutar: el `400` sale del pipeline del servidor, no de una ruta concreta (`design.md` §6 lo declara "capa HTTP"), así que esta tarea no agrega ningún stub de la ruta de gastos — esa ruta es alcance de T17.
 
 *Hecho cuando:*
 
@@ -516,12 +527,14 @@ CP64 es el requisito estrella visto de punta a punta: el aviso de exceso viaja e
 | **Archivos previstos** | `src/domain/pureza.test.ts` |
 | **Decisiones que la condicionan** | D9 (el `id` se inyecta precisamente para no importar `node:crypto`) |
 
-Va al cerrar el dominio para que falle si alguna de T1–T11 metió una importación indebida. Es el test que convierte NF4 de intención en garantía: sin él, la primera vez que alguien necesite un `Date.now()` o un `randomUUID` dentro del dominio nadie se va a enterar.
+Va al cerrar el dominio, antes del almacenamiento (§3): ejecutado ahí, CP74 corre en el `npm test` de todas las tareas siguientes y una importación indebida se detecta en la tarea que la introduce. Es el test que convierte NF4 de intención en garantía: sin él, la primera vez que alguien necesite un `Date.now()` o un `randomUUID` dentro del dominio nadie se va a enterar.
+
+El escaneo excluye `*.test.ts`, y no es un detalle: `pureza.test.ts` vive en `src/domain/` e importa `node:fs` para leer los archivos, así que el escaneo literal de CP74 se marcaría a sí mismo. La exclusión es fiel a NF4, que protege las **reglas** del dominio —lo que se ejecuta sin servidor ni disco—, no a sus tests, que corren en Vitest y pueden tocar lo que necesiten.
 
 *Hecho cuando:*
 
-- [ ] El test falla si se agrega a propósito un `import "node:fs"` en un archivo del dominio
-- [ ] Pasa con el dominio tal como quedó en T1–T11
+- [ ] El test falla si se agrega a propósito un `import "node:fs"` en un archivo de producción del dominio (p. ej. `consumo.ts`)
+- [ ] Pasa con el dominio tal como quedó en T1–T11, sin marcar ningún `*.test.ts` — empezando por el propio `pureza.test.ts`
 - [ ] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
@@ -572,8 +585,8 @@ Si al implementar aparece la necesidad de calcular algo en la vista, es señal d
 
 *Hecho cuando:*
 
-- [ ] El selector de mes carga las categorías con su barra de consumo y el color de su estado
-- [ ] Un mes sin presupuesto muestra el estado vacío y ofrece copiar el mes anterior; si el destino ya tiene límites, se muestra el mensaje del `409`
+- [ ] El selector de mes carga las categorías con su barra de consumo y el color de su estado, en el orden en que la API las devuelve — la vista no reordena
+- [ ] Un mes sin presupuesto muestra el estado vacío y ofrece copiar el mes anterior; al copiar, las categorías del origen aparecen con sus límites; si el destino ya tiene límites, se muestra el mensaje del `409`
 - [ ] Una categoría excedida se distingue a simple vista y muestra el monto sobrepasado
 - [ ] `npm run typecheck` y `npm test` en verde
 
@@ -581,7 +594,7 @@ Si al implementar aparece la necesidad de calcular algo en la vista, es señal d
 
 *(la llena la implementación)*
 
-### T21 — UI: registrar un gasto con aviso de exceso, listar y borrar
+### T21 — UI: registrar un gasto con aviso de exceso
 
 **Estado:** `Pendiente`
 
@@ -589,18 +602,73 @@ Si al implementar aparece la necesidad de calcular algo en la vista, es señal d
 
 | | |
 |---|---|
-| **Requisitos** | R3.1, R3.3, R3.5, R4.1, R6.1, R6.2, R6.4 (en pantalla) |
-| **Casos de prueba** | Ninguno automatizado — D6. El aviso que muestra viene de la respuesta verificada en CP64 |
-| **Componente** | `vista` (web), `main` (web) |
-| **Archivos previstos** | `web/src/vista.ts`, `web/src/main.ts` |
-| **Decisiones que la condicionan** | D6, y T17 (el estado de la categoría llega en la respuesta del `POST`, sin segunda petición) |
+| **Requisitos** | R3.1, R3.3, R3.5, R3.6, R4.1 (en pantalla) |
+| **Casos de prueba** | Ninguno automatizado — D6. El aviso que muestra viene de la respuesta verificada en CP64, y el mensaje de rechazo, de la verificada en CP65 |
+| **Componente** | `api` (web), `vista` (web), `main` (web) |
+| **Archivos previstos** | `web/src/api.ts`, `web/src/vista.ts`, `web/src/main.ts` |
+| **Decisiones que la condicionan** | D6, T17 (el estado de la categoría llega en la respuesta del `POST`, sin segunda petición), y T23 (el gate del plan la ubicó antes en el orden de ejecución de §3: construye la pantalla de límites a la que el aviso del `400` de R3.3 enlaza) |
+
+Extiende `web/src/api.ts` —que T20 crea solo con las rutas de presupuesto— con la llamada `POST /api/gastos`. La lista de gastos y el borrado quedan en T22: son la familia R6 y se demuestran por separado en pantalla. La acción de definir el límite que el mensaje del `400` sugiere («Defínelo primero», design.md §6) exige la pantalla del `PUT /api/presupuestos`: la construye T23, que el orden de ejecución de §3 deja antes de esta tarea, así que el enlace del aviso ya tiene dónde llevar al usuario cuando esta tarea se ejecute.
 
 *Hecho cuando:*
 
-- [ ] El formulario registra un gasto y la lista y las barras se actualizan
+- [ ] El formulario registra un gasto y las barras de consumo del mes se actualizan
 - [ ] Un gasto que excede muestra el aviso con el monto sobrepasado, tomado de la respuesta del `POST`
-- [ ] Un gasto en una categoría sin presupuesto en el mes de su fecha muestra el mensaje del `400` y ofrece definir ese límite
+- [ ] Un gasto en una categoría sin presupuesto en el mes de su fecha muestra el mensaje del `400` con un enlace a la pantalla de límites de T23; un monto inválido (cero, negativo o con decimales) muestra su propio mensaje del `400`
+- [ ] `npm run typecheck` y `npm test` en verde
+
+**Bitácora**
+
+*(la llena la implementación)*
+
+### T22 — UI: listar los gastos del mes y borrar uno
+
+**Estado:** `Pendiente`
+
+**Plan** *(inmutable)*
+
+| | |
+|---|---|
+| **Requisitos** | R6.1, R6.2, R6.3, R6.4 (en pantalla) |
+| **Casos de prueba** | Ninguno automatizado — D6. El orden lo garantiza la API (CP68) y el efecto del borrado sobre el consumo, CP69 |
+| **Componente** | `api` (web), `vista` (web), `main` (web) |
+| **Archivos previstos** | `web/src/api.ts`, `web/src/vista.ts`, `web/src/main.ts` |
+| **Decisiones que la condicionan** | D6, y el riesgo de design.md §10: tras borrar, el consumo actualizado se vuelve a pedir a la API, no se recalcula en la vista |
+
+Nace de partir la T21 original: registrar (R3/R4) y listar-y-borrar (R6) son dos familias que se demuestran por separado en pantalla. Extiende `web/src/api.ts` con `GET /api/gastos?mes=` y `DELETE /api/gastos/{id}`. La lista llega ya ordenada de la API (CP68): la vista no reordena.
+
+*Hecho cuando:*
+
+- [ ] La lista muestra los gastos del mes con su fecha, categoría, monto y descripción, en el orden en que la API los devuelve
+- [ ] Un mes sin gastos muestra la lista vacía, sin error
 - [ ] Borrar un gasto lo quita de la lista y baja el consumo de su categoría
+- [ ] `npm run typecheck` y `npm test` en verde
+
+**Bitácora**
+
+*(la llena la implementación)*
+
+### T23 — UI: fijar y ajustar los límites del mes
+
+**Estado:** `Pendiente`
+
+**Plan** *(inmutable)*
+
+| | |
+|---|---|
+| **Requisitos** | R1.1, R1.2, R1.4, R1.8 (en pantalla) |
+| **Casos de prueba** | Ninguno automatizado — D6 dejó `web/` sin pruebas. El `PUT` que esta pantalla dispara está verificado en la API: CP59 (éxito), CP60 (`400` por límite negativo), CP61 (`409` con el nombre y el conteo); el reemplazo del conjunto, en CP14 y CP15 |
+| **Componente** | `api` (web), `vista` (web), `main` (web) |
+| **Archivos previstos** | `web/src/api.ts`, `web/src/vista.ts`, `web/src/main.ts` |
+| **Decisiones que la condicionan** | D5 (el código HTTP dice qué acción ofrecer: `400` → corregir el formulario, `409` → revisar los gastos), D6, y el riesgo de design.md §10: la vista no valida límites por su cuenta, muestra lo que la API responde |
+
+Nace del diagnóstico de T21: ninguna tarea construía R1 en pantalla (T20 cubre R5 y R2, T21 R3 y R4, T22 R6), y sin esta pantalla la app no puede crear su **primer** presupuesto desde la UI — copiar (T20) exige un origen que nadie pudo definir. Es el flujo B de design.md §3 visto desde la pantalla, y es donde vive la affordance «definir ese límite» que T21 delegó («Defínelo primero», design.md §6). Extiende `web/src/api.ts` con `PUT /api/presupuestos/{mes}`. El mismo editor sirve para fijar (mes sin presupuesto) y ajustar (mes con límites): agregar, quitar y cambiar filas de categoría-límite y guardar el conjunto completo, que es exactamente como el dominio trata la operación (R1.2 reemplaza, no parchea).
+
+*Hecho cuando:*
+
+- [ ] Un mes sin presupuesto permite crear el primero desde la pantalla: se agregan categorías con su límite, se guarda y las barras de consumo aparecen
+- [ ] Editar los límites de un mes que ya los tiene los reemplaza y la vista refleja el conjunto nuevo
+- [ ] Un límite negativo muestra el mensaje del `400` sobre el formulario; quitar una categoría con gastos muestra el `409` con el nombre y el conteo, ofreciendo revisar los gastos en lugar de corregir el formulario
 - [ ] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
@@ -611,14 +679,14 @@ Si al implementar aparece la necesidad de calcular algo en la vista, es señal d
 
 | Requisito | Tarea |
 |---|---|
-| R1.1 | T5, T16 |
-| R1.2 | T5 |
+| R1.1 | T5, T16, T23 |
+| R1.2 | T5, T23 |
 | R1.3 | T2 |
-| R1.4 | T2, T6, T14, T16 |
+| R1.4 | T2, T5, T14, T16, T23 |
 | R1.5 | T2 |
 | R1.6 | T2 |
 | R1.7 | T2 |
-| R1.8 | T6, T14, T16 |
+| R1.8 | T6, T14, T16, T23 |
 | R1.9 | T6 |
 | R1.10 | T1 |
 | R1.11 | T5 |
@@ -630,13 +698,13 @@ Si al implementar aparece la necesidad de calcular algo en la vista, es señal d
 | R2.6 | T7 |
 | R3.1 | T8, T21 |
 | R3.2 | T1, T8 |
-| R3.3 | T9, T14, T17, T21 |
+| R3.3 | T9, T15, T17, T21 |
 | R3.4 | T2, T8 |
 | R3.5 | T9, T21 |
-| R3.6 | T9 |
+| R3.6 | T9, T21 |
 | R3.7 | T1 |
 | R3.8 | T8 |
-| R3.9 | T8 |
+| R3.9 | T8, T15 |
 | R4.1 | T3, T17, T21 |
 | R4.2 | T3 |
 | R4.3 | T3 |
@@ -652,10 +720,10 @@ Si al implementar aparece la necesidad de calcular algo en la vista, es señal d
 | R5.7 | T4, T14, T20 |
 | R5.8 | T4, T5, T20 |
 | R5.9 | T1, T16 |
-| R6.1 | T10, T17, T21 |
-| R6.2 | T10, T17, T21 |
-| R6.3 | T10 |
-| R6.4 | T15, T17, T21 |
+| R6.1 | T10, T17, T22 |
+| R6.2 | T10, T17, T22 |
+| R6.3 | T10, T22 |
+| R6.4 | T15, T17, T22 |
 | R6.5 | T11, T17 |
 | R6.6 | T11 |
 | NF1 | T2, T3, T9 |
@@ -678,6 +746,8 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 
 | # | Tarea | Decisión | Fecha |
 |---|---|---|---|
+| T1-D1 | T1 | Validación de calendario con tabla de días y bisiestos propia, sin `Date` (ver bitácora T1) | 2026-08-19 |
+| T2-D1 | T2 | `NOMBRE_DUPLICADO` informa el nombre tal como se escribió primero, no el del choque (ver bitácora T2) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
@@ -688,7 +758,8 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 
 ## 8. Tareas descubiertas durante la implementación
 
-*Vacío: las 21 tareas del plan salen de las tablas §7 y §8 de `design.md`. Lo que aparezca de más se agrega acá con su número, y si para escribirlo hace falta un criterio de aceptación nuevo, vuelve a `requirements.md` con su gate.*
+*Las 22 tareas originales salen de las tablas §7 y §8 de `design.md` (T22 nació al partir la T21 original durante el dimensionado, con el plan todavía en borrador — no es un descubrimiento de implementación, y por eso no se lista abajo). T23 apareció después del plan original, también con el plan en borrador. Lo que aparezca durante la implementación se agrega acá con su número, y si para escribirlo hace falta un criterio de aceptación nuevo, vuelve a `requirements.md` con su gate.*
 
 | # | Tarea | Por qué apareció | ¿Cambia el alcance? |
 |---|---|---|---|
+| T23 | UI: fijar y ajustar los límites del mes | Diagnóstico de T21: ninguna tarea construía R1 en pantalla, y la affordance «definir ese límite» que su `400` sugiere no tenía dónde vivir | No — «fijar y ajustar los límites» es el primer punto del alcance aprobado (requirements.md §2); solo faltaba su pantalla |

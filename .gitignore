@@ -10,3 +10,9 @@
 # que los creo. Git ya los conoce por .git/worktrees, no hacen falta acá.
 .claude/worktrees/
 **/.claude/worktrees/
+
+# Node (repuesto en T1 del spec presupuesto-mensual; el revert 35eaa77 lo había borrado)
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
