@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fijarLimites } from "./presupuesto";
+import { copiarLimites, fijarLimites } from "./presupuesto";
 import type { Categoria, Gasto } from "./tipos";
 
 const sinGastos: Gasto[] = [];
@@ -109,5 +109,79 @@ describe("fijarLimites", () => {
     );
     expect(resultado.ok).toBe(false);
     if (!resultado.ok) expect(resultado.error.codigo).toBe("LIMITE_NEGATIVO");
+  });
+});
+
+describe("copiarLimites", () => {
+  const tresCategorias: Categoria[] = [
+    { nombre: "Comida", limite: 500000 },
+    { nombre: "Transporte", limite: 200000 },
+    { nombre: "Ocio", limite: 150000 },
+  ];
+
+  it("CP20 — copiar 3 categorías a un mes vacío → las mismas 3 con los mismos límites", () => {
+    const resultado = copiarLimites(
+      { mes: "2026-07", categorias: tresCategorias },
+      { mes: "2026-08", categorias: [] },
+    );
+    expect(resultado).toEqual({ ok: true, valor: tresCategorias });
+  });
+
+  it("CP21 — el origen tiene gastos → el destino queda sin gastos", () => {
+    // copiarLimites solo recibe y devuelve categorías (design.md §4): la firma hace
+    // imposible copiar gastos. El test fija que el valor devuelto son categorías puras.
+    const resultado = copiarLimites(
+      { mes: "2026-07", categorias: tresCategorias },
+      { mes: "2026-08", categorias: [] },
+    );
+    expect(resultado.ok).toBe(true);
+    if (resultado.ok) {
+      for (const categoria of resultado.valor) {
+        expect(Object.keys(categoria).sort()).toEqual(["limite", "nombre"]);
+      }
+    }
+  });
+
+  it("CP22 — destino con 1 categoría → DESTINO_NO_VACIO", () => {
+    const resultado = copiarLimites(
+      { mes: "2026-07", categorias: tresCategorias },
+      { mes: "2026-08", categorias: [{ nombre: "Comida", limite: 100000 }] },
+    );
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) expect(resultado.error.codigo).toBe("DESTINO_NO_VACIO");
+  });
+
+  it("CP23 — origen sin categorías → ORIGEN_SIN_PRESUPUESTO", () => {
+    const resultado = copiarLimites(
+      { mes: "2026-06", categorias: [] },
+      { mes: "2026-08", categorias: [] },
+    );
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) expect(resultado.error.codigo).toBe("ORIGEN_SIN_PRESUPUESTO");
+  });
+
+  it("CP24 — origen igual a destino → MESES_IGUALES", () => {
+    const resultado = copiarLimites(
+      { mes: "2026-07", categorias: tresCategorias },
+      { mes: "2026-07", categorias: tresCategorias },
+    );
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) expect(resultado.error.codigo).toBe("MESES_IGUALES");
+  });
+
+  it("CP25 — tras copiar, el origen queda idéntico y sin referencias compartidas", () => {
+    const origen = {
+      mes: "2026-07",
+      categorias: structuredClone(tresCategorias),
+    };
+    const antes = structuredClone(origen.categorias);
+    const resultado = copiarLimites(origen, { mes: "2026-08", categorias: [] });
+    expect(origen.categorias).toEqual(antes);
+    expect(resultado.ok).toBe(true);
+    if (resultado.ok) {
+      // Mutar la copia no debe tocar el origen: no comparten referencias.
+      resultado.valor[0]!.limite = 1;
+      expect(origen.categorias[0]?.limite).toBe(500000);
+    }
   });
 });

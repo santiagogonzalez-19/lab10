@@ -234,7 +234,7 @@ CP19 (la atomicidad de R1.4) vive en T5 y no acá: su rojo solo es incondicional
 
 ### T7 — Copiar los límites de un mes a otro
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -250,13 +250,15 @@ CP21 es el que hace visible que se copian límites y no historia: es la diferenc
 
 *Hecho cuando:*
 
-- [ ] CP20–CP25 fallan porque `copiarLimites` no existe
-- [ ] Los seis pasan, y la copia no comparte referencias mutables con el origen
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP20–CP25 fallan porque `copiarLimites` no existe
+- [x] Los seis pasan, y la copia no comparte referencias mutables con el origen
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (los seis CP fallan porque `copiarLimites` no existe) y verde copiando cada categoría con spread: CP25 muta la copia devuelta y comprueba que el origen no cambia, así que la ausencia de referencias compartidas está probada, no supuesta.
+- 2026-08-19 — T7-D1: orden de los rechazos: `MESES_IGUALES` → `DESTINO_NO_VACIO` → `ORIGEN_SIN_PRESUPUESTO`. El diseño no lo fija, pero CP24 (origen = destino, ambos poblados) lo obliga en la práctica: copiar un mes sobre sí mismo también tiene "destino no vacío", y el error correcto es el de meses iguales, que es la causa raíz.
+- 2026-08-19 — CP21 se apoya en la firma de design.md §4: `copiarLimites` solo recibe y devuelve categorías, con lo que copiar gastos es imposible por construcción; el test fija además que el valor devuelto tiene exactamente las claves `nombre`/`limite`. El recorrido con gastos reales de por medio lo cubre CP62 en T17.
 
 ### T8 — Registrar un gasto válido
 
@@ -751,6 +753,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 |---|---|---|---|
 | T1-D1 | T1 | Validación de calendario con tabla de días y bisiestos propia, sin `Date` (ver bitácora T1) | 2026-08-19 |
 | T2-D1 | T2 | `NOMBRE_DUPLICADO` informa el nombre tal como se escribió primero, no el del choque (ver bitácora T2) | 2026-08-19 |
+| T7-D1 | T7 | Orden de rechazos al copiar: `MESES_IGUALES` → `DESTINO_NO_VACIO` → `ORIGEN_SIN_PRESUPUESTO` (ver bitácora T7) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
