@@ -343,7 +343,7 @@ CP47 incluye el desempate a igual fecha, que el diseño precisó y los requisito
 
 ### T11 — Quitar un gasto
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -357,13 +357,13 @@ CP47 incluye el desempate a igual fecha, que el diseño precisó y los requisito
 
 *Hecho cuando:*
 
-- [ ] CP50 y CP51 fallan porque `quitarGasto` no existe
-- [ ] Los dos pasan, y `quitarGasto` devuelve un array nuevo sin mutar el recibido
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP50 y CP51 fallan porque `quitarGasto` no existe
+- [x] Los dos pasan, y `quitarGasto` devuelve un array nuevo sin mutar el recibido
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado ("quitarGasto is not a function" en ambos CP) y verde con `some` + `filter`: id inexistente → `GASTO_NO_EXISTE` (D1: error del dominio, no no-op), id existente → array nuevo sin el gasto. CP51 compara el array recibido contra un clon previo para probar que no se muta, y que el presupuesto no se toca lo garantiza la firma: `quitarGasto` ni siquiera lo recibe.
 
 ### T12 — Definir el contrato `Repositorio` y la implementación en memoria
 

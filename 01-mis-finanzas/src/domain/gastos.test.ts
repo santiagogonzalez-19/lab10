@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gastosDeMes, registrarGasto } from "./gastos";
+import { gastosDeMes, quitarGasto, registrarGasto } from "./gastos";
 import type { Categoria, Gasto } from "./tipos";
 
 const presupuestoJunio: Categoria[] = [
@@ -150,5 +150,30 @@ describe("gastosDeMes", () => {
   it("CP48 — mes sin gastos → lista vacía sin error", () => {
     const gastos = [gastoDe("g1", "2026-06", "2026-06-15")];
     expect(gastosDeMes(gastos, "2026-08")).toEqual([]);
+  });
+});
+
+describe("quitarGasto", () => {
+  const tres: Gasto[] = [
+    { id: "g1", mes: "2026-07", categoria: "Comida", monto: 10000, fecha: "2026-07-05", descripcion: "" },
+    { id: "g2", mes: "2026-07", categoria: "Ocio", monto: 20000, fecha: "2026-07-10", descripcion: "" },
+    { id: "g3", mes: "2026-07", categoria: "Comida", monto: 30000, fecha: "2026-07-15", descripcion: "" },
+  ];
+
+  it("CP50 — quitar un id inexistente → GASTO_NO_EXISTE", () => {
+    const resultado = quitarGasto(tres, "no-existe");
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) expect(resultado.error.codigo).toBe("GASTO_NO_EXISTE");
+  });
+
+  it("CP51 — quitar 1 de 3 → quedan los otros 2, sin mutar el array recibido", () => {
+    const antes = structuredClone(tres);
+    const resultado = quitarGasto(tres, "g2");
+    expect(resultado.ok).toBe(true);
+    if (resultado.ok) {
+      expect(resultado.valor.map((g) => g.id)).toEqual(["g1", "g3"]);
+    }
+    // Devuelve un array nuevo: el recibido queda intacto.
+    expect(tres).toEqual(antes);
   });
 });

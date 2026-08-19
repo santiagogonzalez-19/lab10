@@ -48,3 +48,11 @@ export function gastosDeMes(gastos: Gasto[], mes: Mes): Gasto[] {
     .reverse()
     .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
 }
+
+export function quitarGasto(gastos: Gasto[], id: string): Resultado<Gasto[]> {
+  if (!gastos.some((gasto) => gasto.id === id)) {
+    // Borrar algo que no existe es un error del dominio, no un no-op silencioso (D1).
+    return fallo("GASTO_NO_EXISTE", "Ese gasto ya no existe.");
+  }
+  return exito(gastos.filter((gasto) => gasto.id !== id));
+}
