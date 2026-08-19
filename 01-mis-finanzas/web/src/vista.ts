@@ -1,7 +1,7 @@
 // Dibuja el mes. La vista no reordena, no calcula estados ni porcentajes:
 // muestra lo que la API devuelve (D6, riesgo de design.md §10).
 
-import type { ConsumoCategoria, ErrorApi, VistaMes } from "./api";
+import type { Categoria, ConsumoCategoria, ErrorApi, VistaMes } from "./api";
 
 const pesos = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -23,6 +23,7 @@ export function mesAnterior(mes: string): string {
 
 export type AccionesDeMes = {
   alCopiar: (origen: string) => void;
+  alEditar: () => void;
 };
 
 export function dibujarMes(
@@ -39,7 +40,12 @@ export function dibujarMes(
   for (const categoria of vista.categorias) {
     seccion.append(tarjetaDeCategoria(categoria));
   }
-  raiz.append(seccion);
+  const barra = document.createElement("p");
+  const editar = document.createElement("button");
+  editar.textContent = "Ajustar límites";
+  editar.addEventListener("click", () => acciones.alEditar());
+  barra.append(editar);
+  raiz.append(seccion, barra);
 }
 
 function tarjetaDeCategoria(consumo: ConsumoCategoria): HTMLElement {
@@ -90,11 +96,108 @@ function vistaVacia(mes: string, acciones: AccionesDeMes): HTMLElement {
   const texto = document.createElement("p");
   texto.textContent = `${mes} no tiene presupuesto todavía.`;
   const origen = mesAnterior(mes);
-  const boton = document.createElement("button");
-  boton.textContent = `Copiar los límites de ${origen}`;
-  boton.addEventListener("click", () => acciones.alCopiar(origen));
-  contenedor.append(texto, boton);
+  const copiar = document.createElement("button");
+  copiar.textContent = `Copiar los límites de ${origen}`;
+  copiar.addEventListener("click", () => acciones.alCopiar(origen));
+  const definir = document.createElement("button");
+  definir.textContent = "Definir límites";
+  definir.addEventListener("click", () => acciones.alEditar());
+  const botones = document.createElement("p");
+  botones.className = "botones";
+  botones.append(copiar, " ", definir);
+  contenedor.append(texto, botones);
   return contenedor;
+}
+
+export type AccionesDeEditor = {
+  alGuardar: (categorias: Categoria[]) => void;
+  alCancelar: () => void;
+};
+
+// El mismo editor sirve para fijar (mes sin presupuesto) y ajustar (mes con
+// límites): se edita y guarda el conjunto completo, como R1.2 trata la operación.
+export function dibujarEditor(
+  raiz: HTMLElement,
+  mes: string,
+  actuales: Categoria[],
+  acciones: AccionesDeEditor,
+): void {
+  raiz.replaceChildren();
+  const seccion = document.createElement("section");
+  seccion.className = "editor";
+  const titulo = document.createElement("h2");
+  titulo.textContent = `Límites de ${mes}`;
+  const filas = document.createElement("div");
+  filas.className = "filas";
+  for (const categoria of actuales) {
+    filas.append(filaDeCategoria(categoria));
+  }
+  if (actuales.length === 0) filas.append(filaDeCategoria());
+
+  const agregar = document.createElement("button");
+  agregar.textContent = "+ Agregar categoría";
+  agregar.addEventListener("click", () => filas.append(filaDeCategoria()));
+
+  const guardar = document.createElement("button");
+  guardar.textContent = "Guardar";
+  guardar.addEventListener("click", () => {
+    const categorias: Categoria[] = [];
+    for (const fila of filas.querySelectorAll<HTMLElement>(".fila-editor")) {
+      const nombre = fila.querySelector<HTMLInputElement>(".campo-nombre")?.value ?? "";
+      const limite = fila.querySelector<HTMLInputElement>(".campo-limite")?.value ?? "";
+      categorias.push({ nombre, limite: Number(limite) });
+    }
+    acciones.alGuardar(categorias);
+  });
+
+  const cancelar = document.createElement("button");
+  cancelar.textContent = "Cancelar";
+  cancelar.addEventListener("click", () => acciones.alCancelar());
+
+  const botones = document.createElement("p");
+  botones.className = "botones";
+  botones.append(agregar, " ", guardar, " ", cancelar);
+  seccion.append(titulo, filas, botones);
+  raiz.append(seccion);
+}
+
+function filaDeCategoria(categoria?: Categoria): HTMLElement {
+  const fila = document.createElement("div");
+  fila.className = "fila-editor";
+  const nombre = document.createElement("input");
+  nombre.className = "campo-nombre";
+  nombre.placeholder = "Categoría";
+  nombre.value = categoria?.nombre ?? "";
+  const limite = document.createElement("input");
+  limite.className = "campo-limite";
+  limite.type = "number";
+  limite.placeholder = "Límite";
+  limite.value = categoria === undefined ? "" : String(categoria.limite);
+  const quitar = document.createElement("button");
+  quitar.textContent = "Quitar";
+  quitar.addEventListener("click", () => fila.remove());
+  fila.append(nombre, limite, quitar);
+  return fila;
+}
+
+// El 409 conflicta con los datos, no con el formulario (D5): la salida que se
+// ofrece es revisar los gastos del mes, no corregir campos.
+export function dibujarErrorDeEditor(
+  raiz: HTMLElement,
+  error: ErrorApi,
+  alRevisarGastos: () => void,
+): void {
+  raiz.querySelectorAll(".mensaje-error").forEach((previo) => previo.remove());
+  const parrafo = document.createElement("p");
+  parrafo.className = "mensaje-error";
+  parrafo.textContent = error.mensaje;
+  if (error.estado === 409) {
+    const revisar = document.createElement("button");
+    revisar.textContent = "Revisar los gastos del mes";
+    revisar.addEventListener("click", alRevisarGastos);
+    parrafo.append(" ", revisar);
+  }
+  raiz.querySelector(".editor")?.append(parrafo);
 }
 
 export function dibujarError(raiz: HTMLElement, error: ErrorApi): void {

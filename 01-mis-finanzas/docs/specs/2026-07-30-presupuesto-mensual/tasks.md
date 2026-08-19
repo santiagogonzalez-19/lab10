@@ -678,7 +678,7 @@ Nace de partir la T21 original: registrar (R3/R4) y listar-y-borrar (R6) son dos
 
 ### T23 — UI: fijar y ajustar los límites del mes
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -694,14 +694,17 @@ Nace del diagnóstico de T21: ninguna tarea construía R1 en pantalla (T20 cubre
 
 *Hecho cuando:*
 
-- [ ] Un mes sin presupuesto permite crear el primero desde la pantalla: se agregan categorías con su límite, se guarda y las barras de consumo aparecen
-- [ ] Editar los límites de un mes que ya los tiene los reemplaza y la vista refleja el conjunto nuevo
-- [ ] Un límite negativo muestra el mensaje del `400` sobre el formulario; quitar una categoría con gastos muestra el `409` con el nombre y el conteo, ofreciendo revisar los gastos en lugar de corregir el formulario
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] Un mes sin presupuesto permite crear el primero desde la pantalla: se agregan categorías con su límite, se guarda y las barras de consumo aparecen
+- [x] Editar los límites de un mes que ya los tiene los reemplaza y la vista refleja el conjunto nuevo
+- [x] Un límite negativo muestra el mensaje del `400` sobre el formulario; quitar una categoría con gastos muestra el `409` con el nombre y el conteo, ofreciendo revisar los gastos en lugar de corregir el formulario
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — `api.ts` extendida con `fijarLimites` (el `PUT` verificado en CP59–CP61). El editor (`dibujarEditor`) es uno solo para fijar y ajustar: filas de categoría-límite (agregar, quitar, cambiar) y guardar el conjunto completo, como R1.2 trata la operación. El estado vacío de T20 ganó el botón «Definir límites» junto al de copiar — la pantalla que hace posible el **primer** presupuesto — y la vista del mes el botón «Ajustar límites».
+- 2026-08-19 — Verificación manual en navegador real (los 4 checks): (1) 2026-10 vacío → «Definir límites» → fila Comida/300 000 → guardar → la barra aparece; (2) «Ajustar límites» → conjunto reemplazado por Mercado/Salud → la vista refleja el conjunto nuevo, sin merge; (3) límite `-5` → «Los límites no pueden ser negativos.» sobre el formulario, editor intacto; quitar «Ocio» en julio → «"Ocio" tiene 1 gasto en este mes…» con el botón «Revisar los gastos del mes» (D5: el 409 ofrece salir a los datos, no corregir campos) — ese botón hoy vuelve a la vista del mes, y T22 le dará la lista de gastos como destino real.
+- 2026-08-19 — T23-D1: el editor manda `Number(campo)` tal cual (vacío → `NaN`) y los rechazos son los del dominio vía la API (`LIMITE_NO_ENTERO`, etc.): la vista no valida límites por su cuenta, como fija el riesgo de §10 — el espejo de T17-D1 en el otro extremo del cable.
+- 2026-08-19 — Corrección del verificador a la entrada anterior (que se deja como está, la bitácora no se reescribe): `Number("")` es `0`, no `NaN`, así que una fila con límite vacío manda `limite: 0` y la API la **acepta** — límite 0 es válido (R1.3, CP11). La conducta queda como decisión consciente: un campo vacío significa «esta categoría existe con límite cero», y sigue sin haber validación en la vista. La fila de §6 quedó corregida. También quedó sin registrar en la entrada de apertura que `web/index.html` ganó 6 líneas de CSS para el editor (presentación pura); se registra acá.
 
 ## 5. Trazabilidad criterio → tarea
 
@@ -788,6 +791,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T20-D1 | T20 | `web/` con `tsconfig` propio (lib DOM); `npm run typecheck` corre ambos proyectos (ver bitácora T20) | 2026-08-19 |
 | T20-D2 | T20 | `web/src/api.ts` declara sus propios tipos del contrato JSON, sin importar `src/domain` (ver bitácora T20) | 2026-08-19 |
 | T20-D3 | T20 | `mesAnterior` vive en la vista: aritmética de calendario que la API no ofrece, con el borde de enero verificado (ver bitácora T20) | 2026-08-19 |
+| T23-D1 | T23 | El editor manda `Number(campo)` sin validar en la vista; campo vacío → `0`, que el dominio acepta (R1.3) — corregida, ver bitácora T23 | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 

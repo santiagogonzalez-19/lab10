@@ -59,3 +59,14 @@ export function copiarLimites(
     { method: "POST" },
   );
 }
+
+export function fijarLimites(
+  mes: string,
+  categorias: Categoria[],
+): Promise<Respuesta<{ categorias: Categoria[] }>> {
+  return pedir(`/api/presupuestos/${encodeURIComponent(mes)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ categorias }),
+  });
+}
