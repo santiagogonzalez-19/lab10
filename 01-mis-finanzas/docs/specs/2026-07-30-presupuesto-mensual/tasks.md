@@ -452,7 +452,7 @@ CP52 se verifica con un `RepositorioMemoria` que cuente las escrituras: es la ú
 
 ### T15 — Casos de uso de gastos: registrar con aviso, listar, borrar
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -468,13 +468,15 @@ CP45 es el criterio que hace que el aviso de exceso sea utilizable: la respuesta
 
 *Hecho cuando:*
 
-- [ ] CP45, CP49 y la rama R3.3 de CP52 fallan porque los casos de uso de gastos no existen
-- [ ] Los tres pasan, el `id` se genera acá y no en el dominio, `listarGastos` delega en `gastosDeMes` sin reordenar ni filtrar por su cuenta, y `registrarGasto` no escribe cuando el dominio devuelve `ok: false`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP45, CP49 y la rama R3.3 de CP52 fallan porque los casos de uso de gastos no existen
+- [x] Los tres pasan, el `id` se genera acá y no en el dominio, `listarGastos` delega en `gastosDeMes` sin reordenar ni filtrar por su cuenta, y `registrarGasto` no escribe cuando el dominio devuelve `ok: false`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (los cinco tests nuevos fallan: `registrarGasto`/`listarGastos`/`borrarGasto` no existen en `CasosUso`) y verde completando el tipo que T14-D1 dejó parcial. La rama R3.3 de CP52 reusa `RepositorioContador` y `esperarRechazoSinEscritura` de T14, como el plan exige. CP45 siembra "Ocio" ya excedida y fija que la respuesta trae el consumo de "Comida" con su estado; CP49 borra `g1` y ve el gastado de "Ocio" caer de 200000 a 0 vía `verMes`.
+- 2026-08-19 — Dos tests extra sin CP numerado, ambos previstos por los checks del plan: el `id` sale del `generarId` inyectado (patrón `id-N` de la fábrica de prueba — en producción T19 inyecta `crypto.randomUUID`), y `listarGastos` devuelve solo el mes pedido en el orden de `gastosDeMes` (g2 antes que g1, descendente).
+- 2026-08-19 — T15-D1: para elegir el presupuesto contra el que se registra, el caso de uso toma `fecha.slice(0, 7)` **antes** de que el dominio valide la fecha. Si la fecha es basura, la clave no matchea ningún mes, pero no importa: `registrarGasto` valida la fecha primero (T9-D1) y rechaza antes de mirar categorías. La alternativa (validar la fecha dos veces, en las dos capas) duplicaría la validación que D4/D9 quieren en un solo lugar.
 
 ### T16 — Servidor HTTP: errores y rutas de presupuesto
 
@@ -769,6 +771,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T10-D1 | T10 | Desempate a igual fecha por inversión + sort estable, sin campo de secuencia (ver bitácora T10) | 2026-08-19 |
 | T12-D1 | T12 | `RepositorioMemoria` clona en `leer`/`escribir` para igualar la semántica del repositorio de archivo (ver bitácora T12) | 2026-08-19 |
 | T14-D1 | T14 | El tipo `CasosUso` se declara parcial en T14 y se completa en T15, sin stubs (ver bitácora T14) | 2026-08-19 |
+| T15-D1 | T15 | El caso de uso elige el presupuesto con `fecha.slice(0, 7)` sin pre-validar: el dominio valida la fecha primero (ver bitácora T15) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
