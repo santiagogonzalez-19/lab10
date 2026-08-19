@@ -424,7 +424,7 @@ CP55 es el caso que protege los datos del usuario: la tentación al implementar 
 
 ### T14 — Casos de uso de presupuesto: ver el mes, fijar límites, copiar
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -440,13 +440,15 @@ CP52 se verifica con un `RepositorioMemoria` que cuente las escrituras: es la ú
 
 *Hecho cuando:*
 
-- [ ] CP52 (ramas R1.4, R1.8 y R2.3) y CP43-vía-`verMes` fallan porque los casos de uso no existen
-- [ ] Las tres ramas y CP43 pasan, y ninguna operación escribe cuando el dominio devuelve `ok: false`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP52 (ramas R1.4, R1.8 y R2.3) y CP43-vía-`verMes` fallan porque los casos de uso no existen
+- [x] Las tres ramas y CP43 pasan, y ninguna operación escribe cuando el dominio devuelve `ok: false`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (los cuatro CP fallan porque `./casos-uso` no existe) y verde. CP52 quedó como el plan lo pide: `RepositorioContador` (un `RepositorioMemoria` que cuenta escrituras) + helper `esperarRechazoSinEscritura(repo, operacion, codigo)`, exportados desde `casos-uso.test.ts` para que T15 los reuse en la rama R3.3. Cada operación escribe una sola vez y únicamente con `ok: true`.
+- 2026-08-19 — T14-D1: el tipo `CasosUso` se declara en esta tarea solo con las tres operaciones de presupuesto y se completa en T15 con las de gastos. La alternativa (declarar las seis ya con stubs) fabricaría implementación sin test y dejaría el rojo de T15 sin razón de existir. `crearCasosUso` ya recibe `generarId` (firma de design.md §4), que T15 consumirá.
+- 2026-08-19 — Dos tests extra sin CP numerado: R1.11 en persistencia (la lista vacía **borra la clave del mes** en `Datos.presupuestos` — la traducción «array vacío = sin presupuesto» que T5 dejó pendiente a esta capa) y el consumo de `verMes` calculado con los gastos del mes pedido. `copiarLimites` valida ambos meses antes de leer; el orden destino→origen no lo fija ningún CP.
 
 ### T15 — Casos de uso de gastos: registrar con aviso, listar, borrar
 
@@ -766,6 +768,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T9-D1 | T9 | Orden de validación al registrar: fecha → monto entero → monto positivo → categoría (ver bitácora T9) | 2026-08-19 |
 | T10-D1 | T10 | Desempate a igual fecha por inversión + sort estable, sin campo de secuencia (ver bitácora T10) | 2026-08-19 |
 | T12-D1 | T12 | `RepositorioMemoria` clona en `leer`/`escribir` para igualar la semántica del repositorio de archivo (ver bitácora T12) | 2026-08-19 |
+| T14-D1 | T14 | El tipo `CasosUso` se declara parcial en T14 y se completa en T15, sin stubs (ver bitácora T14) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
