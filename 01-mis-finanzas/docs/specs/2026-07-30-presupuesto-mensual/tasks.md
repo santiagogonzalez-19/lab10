@@ -179,7 +179,7 @@ CP35 es el caso que protege BR7 desde el lado del cálculo: un gasto de junio no
 
 ### T5 — Fijar y reemplazar los límites de un mes
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -195,13 +195,15 @@ CP19 es la atomicidad de R1.4 vista desde `fijarLimites`: el conjunto completo s
 
 *Hecho cuando:*
 
-- [ ] CP13, CP14, CP15, CP18 y CP19 fallan porque `fijarLimites` no existe
-- [ ] Los cinco pasan: el orden recibido se preserva en el resultado y un rechazo no aplica ninguna categoría
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP13, CP14, CP15, CP18 y CP19 fallan porque `fijarLimites` no existe
+- [x] Los cinco pasan: el orden recibido se preserva en el resultado y un rechazo no aplica ninguna categoría
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (los cinco CP fallan porque `./presupuesto` no existe) y verde con `fijarLimites` delegando la validación en `validarCategorias` (sin duplicarla, como el plan exige) y devolviendo el conjunto recibido como reemplazo completo: CP14 fija que no hay merge, CP18 que la lista vacía es válida.
+- 2026-08-19 — CP19 quedó verde por la delegación misma: `validarCategorias` devuelve el primer error sin aplicar nada, así que el rechazo nunca produce resultado parcial. CP15 (BR7) se escribió sobre la estructura `Datos.presupuestos` por mes: `fijarLimites` opera sobre las categorías de un solo mes (firma de design.md §4), y el test fija que reemplazar julio no toca junio.
+- 2026-08-19 — Los parámetros `actuales` y `gastosDelMes` quedan declarados y sin uso en esta tarea: son la firma aprobada en design.md §4, y T6 los necesita para contar los gastos de las categorías que desaparecen. Dejarlos ya evita cambiar la firma en T6.
 
 ### T6 — Impedir quitar una categoría que tiene gastos
 
