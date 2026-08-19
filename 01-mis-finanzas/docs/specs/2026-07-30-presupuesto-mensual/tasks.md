@@ -567,7 +567,7 @@ El escaneo excluye `*.test.ts`, y no es un detalle: `pureza.test.ts` vive en `sr
 
 ### T19 — Arranque: cargar el archivo y levantar el servidor
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -583,13 +583,14 @@ El escaneo excluye `*.test.ts`, y no es un detalle: `pureza.test.ts` vive en `sr
 
 *Hecho cuando:*
 
-- [ ] `npm start` levanta el servidor y `GET /api/presupuestos/<mes actual>` responde `200`
-- [ ] Con un `datos/finanzas.json` deliberadamente corrupto, el proceso termina con código distinto de cero, informa la ruta, y el archivo queda intacto
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] `npm start` levanta el servidor y `GET /api/presupuestos/<mes actual>` responde `200`
+- [x] Con un `datos/finanzas.json` deliberadamente corrupto, el proceso termina con código distinto de cero, informa la ruta, y el archivo queda intacto
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Verificación a mano hecha, con las dos comprobaciones del plan: (1) `npm start` con `PORT=3789` y `GET /api/presupuestos/2026-08` → `200 {"mes":"2026-08","categorias":[]}`; (2) con un `finanzas.json` corrupto (`FINANZAS_DATOS` apuntando a un temporal), el proceso terminó con código 1, imprimió «El archivo de datos … no contiene JSON válido y no se va a sobrescribir» con la ruta completa, y el archivo quedó byte a byte igual (flujo D, NF3). `main.ts` lee ANTES de escuchar, que es lo que hace posible ese aborto.
+- 2026-08-19 — T19-D1: el script `start` es `vite-node src/main.ts`. Node 22 no ejecuta los imports sin extensión de este proyecto ni con type-stripping, y `vite-node` ya viene como dependencia transitiva de vitest: cero dependencias nuevas (regla del proyecto). La ruta de datos y el puerto salen de `FINANZAS_DATOS` y `PORT` con defaults `datos/finanzas.json` y 3000; acá se inyecta `crypto.randomUUID` como `generarId` (D9), cerrando la mitad que T15 dejó pendiente.
 
 ### T20 — UI: ver el mes y arrancarlo copiando el anterior
 
@@ -780,6 +781,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T15-D1 | T15 | El caso de uso elige el presupuesto con `fecha.slice(0, 7)` sin pre-validar: el dominio valida la fecha primero (ver bitácora T15) | 2026-08-19 |
 | T16-D1 | T16 | El `PUT` de presupuestos usa `{ categorias }` en ambos sentidos; cuerpo sin esa clave = lista vacía, sin error HTTP nuevo (ver bitácora T16) | 2026-08-19 |
 | T17-D1 | T17 | El cuerpo del `POST /api/gastos` se traduce con defaults tipados que caen en los rechazos del dominio (ver bitácora T17) | 2026-08-19 |
+| T19-D1 | T19 | `npm start` corre con `vite-node` (transitiva de vitest), sin dependencias nuevas; config por `FINANZAS_DATOS`/`PORT` (ver bitácora T19) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 

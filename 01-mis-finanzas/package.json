@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "start": "vite-node src/main.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
