@@ -16,3 +16,6 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
+
+# Datos del usuario (datos/finanzas.json, escritos por RepositorioArchivo — T13)
+datos/

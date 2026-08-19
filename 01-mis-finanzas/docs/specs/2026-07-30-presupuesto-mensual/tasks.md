@@ -395,7 +395,7 @@ La batería de CP58 se escribe **una vez** como una función que recibe una fáb
 
 ### T13 — Persistir en un archivo JSON de forma atómica y tolerante
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -411,13 +411,16 @@ CP55 es el caso que protege los datos del usuario: la tentación al implementar 
 
 *Hecho cuando:*
 
-- [ ] CP53–CP57 fallan porque `RepositorioArchivo` no existe
-- [ ] CP53–CP57 pasan y la batería compartida de CP58 pasa contra las dos implementaciones
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP53–CP57 fallan porque `RepositorioArchivo` no existe
+- [x] CP53–CP57 pasan y la batería compartida de CP58 pasa contra las dos implementaciones
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (CP53–CP57 y la segunda mitad de CP58 fallan porque `./repositorio-archivo` no existe) y verde. Los tests corren en `mkdtemp` como el plan fija. CP55 y CP56 verifican las dos mitades: lanza informando la ruta **y** el archivo queda byte a byte igual — el camino que protege los datos del usuario (NF3). La batería de CP58 se importa desde `contrato.test.ts`, no se duplica.
+- 2026-08-19 — Escritura atómica con temporal en el mismo directorio + `rename` (D8, NF2); si `writeFile` o `rename` fallan, el temporal se borra, con lo que CP57 (solo `finanzas.json` tras guardar) vale también en el camino de error. La cola de promesas de §10 serializa `escribir`: se agregó un test propio (fuera de los CP numerados) que dispara 5 escrituras concurrentes y fija que queda la última — la cola además nunca queda rechazada: un fallo se propaga a su llamador sin bloquear las escrituras siguientes.
+- 2026-08-19 — `datos/` agregado al `.gitignore` de la raíz, como T1 lo dejó reservado para esta tarea. ENOENT es el único error de lectura que devuelve datos vacíos (CP53); cualquier otro (permisos, corrupción, versión) lanza sin tocar el archivo.
+- 2026-08-19 — Observaciones del verificador atendidas: (1) el no-cacheo respecto de design.md §10 quedó registrado como DV1 en §7; (2) la afirmación «la cola nunca queda rechazada» ahora tiene test: un `escribir` que falla (un directorio ocupando la ruta destino) se propaga a su llamador y el siguiente `escribir` funciona. Suite en verde (70 tests).
 
 ### T14 — Casos de uso de presupuesto: ver el mes, fijar límites, copiar
 
@@ -770,6 +773,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 
 | # | Tarea | Qué difiere de design.md | Resolución |
 |---|---|---|---|
+| DV1 | T13 | §10 dice que `RepositorioArchivo` «mantiene los datos en memoria tras la carga inicial»; la implementación no cachea: `leer` va al disco siempre | Se acepta el desvío: la parte esencial de la mitigación (serializar escrituras) está implementada y con test; releer del disco es inocuo con `rename` atómico y evita un caché que puede desincronizarse. Señalado por el task-verifier de T13 |
 
 ## 8. Tareas descubiertas durante la implementación
 
