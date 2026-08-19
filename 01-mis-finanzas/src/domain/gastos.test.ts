@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { registrarGasto } from "./gastos";
-import type { Categoria } from "./tipos";
+import { gastosDeMes, registrarGasto } from "./gastos";
+import type { Categoria, Gasto } from "./tipos";
 
 const presupuestoJunio: Categoria[] = [
   { nombre: "Comida", limite: 500000 },
@@ -111,5 +111,44 @@ describe("registrarGasto", () => {
       const { id: _id2, ...resto2 } = segundo.valor;
       expect(resto1).toEqual(resto2);
     }
+  });
+});
+
+describe("gastosDeMes", () => {
+  function gastoDe(id: string, mes: string, fecha: string): Gasto {
+    return { id, mes, categoria: "Comida", monto: 10000, fecha, descripcion: `d-${id}` };
+  }
+
+  it("CP46 — gastos de dos meses cargados → solo los del mes pedido, con todos sus campos", () => {
+    const junio = gastoDe("g1", "2026-06", "2026-06-15");
+    const julio = gastoDe("g2", "2026-07", "2026-07-03");
+    const resultado = gastosDeMes([junio, julio], "2026-07");
+    expect(resultado).toEqual([
+      {
+        id: "g2",
+        mes: "2026-07",
+        categoria: "Comida",
+        monto: 10000,
+        fecha: "2026-07-03",
+        descripcion: "d-g2",
+      },
+    ]);
+  });
+
+  it("CP47 — tres gastos, dos con la misma fecha → fecha descendente y, a igual fecha, el registrado más tarde primero", () => {
+    // El orden del array es el orden de registro: g1 y g3 comparten fecha,
+    // g3 se registró más tarde y debe salir antes.
+    const gastos = [
+      gastoDe("g1", "2026-07", "2026-07-10"),
+      gastoDe("g2", "2026-07", "2026-07-20"),
+      gastoDe("g3", "2026-07", "2026-07-10"),
+    ];
+    const resultado = gastosDeMes(gastos, "2026-07");
+    expect(resultado.map((g) => g.id)).toEqual(["g2", "g3", "g1"]);
+  });
+
+  it("CP48 — mes sin gastos → lista vacía sin error", () => {
+    const gastos = [gastoDe("g1", "2026-06", "2026-06-15")];
+    expect(gastosDeMes(gastos, "2026-08")).toEqual([]);
   });
 });

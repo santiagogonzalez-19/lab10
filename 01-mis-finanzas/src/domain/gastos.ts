@@ -1,7 +1,7 @@
 import { buscarCategoria } from "./categorias";
 import { mesDe, validarFecha } from "./mes";
 import { exito, fallo, type Resultado } from "./resultado";
-import type { Categoria, EntradaGasto, Gasto } from "./tipos";
+import type { Categoria, EntradaGasto, Gasto, Mes } from "./tipos";
 
 export function registrarGasto(
   entrada: EntradaGasto,
@@ -37,4 +37,14 @@ export function registrarGasto(
     fecha: fecha.valor,
     descripcion: entrada.descripcion ?? "",
   });
+}
+
+export function gastosDeMes(gastos: Gasto[], mes: Mes): Gasto[] {
+  // Filtra por el campo `mes` (D3, sin reparsear la fecha). El desempate a igual
+  // fecha es "el registrado más tarde primero": se recorre el array (orden de
+  // registro) al revés y el sort estable conserva ese orden entre iguales.
+  return gastos
+    .filter((gasto) => gasto.mes === mes)
+    .reverse()
+    .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
 }

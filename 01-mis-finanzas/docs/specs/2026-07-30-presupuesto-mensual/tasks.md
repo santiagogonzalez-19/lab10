@@ -316,7 +316,7 @@ CP28 es la integridad referencial de BR4 en el momento de escribir: es lo que ga
 
 ### T10 — Listar los gastos de un mes en orden
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -332,13 +332,14 @@ CP47 incluye el desempate a igual fecha, que el diseño precisó y los requisito
 
 *Hecho cuando:*
 
-- [ ] CP46, CP47 y CP48 fallan porque `gastosDeMes` no existe
-- [ ] Los tres pasan, y el orden es determinista con fechas repetidas
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP46, CP47 y CP48 fallan porque `gastosDeMes` no existe
+- [x] Los tres pasan, y el orden es determinista con fechas repetidas
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado ("gastosDeMes is not a function" en los tres CP) y verde con filtro por el campo `mes` (D3, comparación de cadenas sin reparsear la fecha) y orden por fecha descendente.
+- 2026-08-19 — T10-D1: el desempate «a igual fecha, el registrado más tarde primero» se implementa invirtiendo el array filtrado (cuyo orden es el de registro) antes de un sort estable por fecha: entre fechas iguales sobrevive el orden invertido, sin necesidad de un campo de secuencia. CP47 lo clava con g1 y g3 compartiendo fecha y g3 saliendo primero.
 
 ### T11 — Quitar un gasto
 
@@ -757,6 +758,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T2-D1 | T2 | `NOMBRE_DUPLICADO` informa el nombre tal como se escribió primero, no el del choque (ver bitácora T2) | 2026-08-19 |
 | T7-D1 | T7 | Orden de rechazos al copiar: `MESES_IGUALES` → `DESTINO_NO_VACIO` → `ORIGEN_SIN_PRESUPUESTO` (ver bitácora T7) | 2026-08-19 |
 | T9-D1 | T9 | Orden de validación al registrar: fecha → monto entero → monto positivo → categoría (ver bitácora T9) | 2026-08-19 |
+| T10-D1 | T10 | Desempate a igual fecha por inversión + sort estable, sin campo de secuencia (ver bitácora T10) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
