@@ -367,7 +367,7 @@ CP47 incluye el desempate a igual fecha, que el diseño precisó y los requisito
 
 ### T12 — Definir el contrato `Repositorio` y la implementación en memoria
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -383,13 +383,15 @@ La batería de CP58 se escribe **una vez** como una función que recibe una fáb
 
 *Hecho cuando:*
 
-- [ ] La batería del contrato falla porque `RepositorioMemoria` no existe
-- [ ] Pasa contra `RepositorioMemoria`, y `Datos` declara `version: 1`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] La batería del contrato falla porque `RepositorioMemoria` no existe
+- [x] Pasa contra `RepositorioMemoria`, y `Datos` declara `version: 1`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (la batería falla porque `./repositorio-memoria` no existe) y verde con `bateriaDelContrato(nombre, fábrica)` exportada desde `contrato.test.ts`, tal como el plan exige: una sola batería que T13 reusará contra `RepositorioArchivo`. Cubre lectura inicial vacía (`version: 1`), escribir-y-releer, y última-escritura-gana.
+- 2026-08-19 — T12-D1: `RepositorioMemoria` clona con `structuredClone` en `leer` y `escribir`: sin el clon, el llamador y el repositorio compartirían referencias y una mutación posterior contaminaría el estado "persistido" — la implementación de archivo no tiene ese problema porque serializa, y el contrato debe comportarse igual en ambas (CP58). `datosVacios()` vive en `repositorio.ts` como única definición del estado inicial.
+- 2026-08-19 — Observación del verificador atendida: la batería no clavaba el aislamiento que T12-D1 justifica (quitar el clon dejaba los tests verdes). Se agregó un cuarto caso a la batería —mutar lo devuelto por `leer` y comprobar que una relectura no lo refleja—, con lo que T12-D1 pasó de convención a garantía y correrá también contra `RepositorioArchivo` en T13. Suite en verde (55 tests).
 
 ### T13 — Persistir en un archivo JSON de forma atómica y tolerante
 
@@ -760,6 +762,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T7-D1 | T7 | Orden de rechazos al copiar: `MESES_IGUALES` → `DESTINO_NO_VACIO` → `ORIGEN_SIN_PRESUPUESTO` (ver bitácora T7) | 2026-08-19 |
 | T9-D1 | T9 | Orden de validación al registrar: fecha → monto entero → monto positivo → categoría (ver bitácora T9) | 2026-08-19 |
 | T10-D1 | T10 | Desempate a igual fecha por inversión + sort estable, sin campo de secuencia (ver bitácora T10) | 2026-08-19 |
+| T12-D1 | T12 | `RepositorioMemoria` clona en `leer`/`escribir` para igualar la semántica del repositorio de archivo (ver bitácora T12) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
