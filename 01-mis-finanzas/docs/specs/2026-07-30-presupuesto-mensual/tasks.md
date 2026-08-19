@@ -262,7 +262,7 @@ CP21 es el que hace visible que se copian límites y no historia: es la diferenc
 
 ### T8 — Registrar un gasto válido
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -278,13 +278,14 @@ CP27 y CP29 son los dos casos que materializan las decisiones D3 y D4: si alguna
 
 *Hecho cuando:*
 
-- [ ] CP26, CP27, CP29, CP32 y CP33 fallan porque `registrarGasto` no existe
-- [ ] Los cinco pasan, y `registrarGasto` no importa `node:crypto`: recibe el `id`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP26, CP27, CP29, CP32 y CP33 fallan porque `registrarGasto` no existe
+- [x] Los cinco pasan, y `registrarGasto` no importa `node:crypto`: recibe el `id`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (los cinco CP fallan porque `./gastos` no existe) y verde con `registrarGasto` recibiendo el `id` como argumento (D9, sin `node:crypto`), derivando `mes` con `validarFecha` + `mesDe` (D3) y resolviendo la categoría vía `buscarCategoria` para almacenar el nombre canónico del presupuesto (D4) — CP27 y CP29 clavan las dos decisiones, como el plan pedía.
+- 2026-08-19 — Camino provisional consciente: si la categoría no está en el presupuesto, esta versión registra igual con el nombre recibido. Es exactamente el estado que el rojo de T9 necesita («hoy el gasto se registraría igual», CP28); T9 lo convierte en `CATEGORIA_SIN_PRESUPUESTO` junto con las validaciones de monto.
 
 ### T9 — Rechazar los gastos inválidos
 
