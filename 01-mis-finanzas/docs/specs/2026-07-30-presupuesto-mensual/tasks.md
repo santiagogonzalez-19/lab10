@@ -480,7 +480,7 @@ CP45 es el criterio que hace que el aviso de exceso sea utilizable: la respuesta
 
 ### T16 — Servidor HTTP: errores y rutas de presupuesto
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -496,13 +496,16 @@ CP60 y CP61 juntos son la prueba de D5: el mismo `PUT` devuelve `400` o `409` se
 
 *Hecho cuando:*
 
-- [ ] CP59, CP60, CP61, CP66, CP67, CP72 y CP73 fallan porque no hay servidor
-- [ ] Los siete pasan, y `errores-http` cubre los 14 códigos de `CodigoError` de forma exhaustiva
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP59, CP60, CP61, CP66, CP67, CP72 y CP73 fallan porque no hay servidor
+- [x] Los siete pasan, y `errores-http` cubre los 14 códigos de `CodigoError` de forma exhaustiva
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado (los siete CP fallan porque `./servidor` no existe) y verde. Los tests levantan el servidor real con `listen(0)` y `RepositorioMemoria`, como el plan fija; CP73 además vuelve a pedir una ruta sana tras el cuerpo ilegible para probar el «sin caerse». `errores-http` usa `Record<CodigoError, number>`: el compilador obliga el mapeo exhaustivo de los 14 códigos (D1); el reparto sigue la tabla de design.md §6 (409 solo para `CATEGORIA_CON_GASTOS`, `DESTINO_NO_VACIO`, `ORIGEN_SIN_PRESUPUESTO`; 404 para `GASTO_NO_EXISTE`).
+- 2026-08-19 — El cuerpo se parsea antes de enrutar, como el plan exige: el 400 de CP73 sale del pipeline (`POST /api/gastos` con JSON roto responde 400 sin que exista todavía la ruta de gastos, que es alcance de T17). El enrutado es un split del pathname sin dependencias (D7). El cuerpo de error HTTP es `{ codigo, mensaje, detalle? }` — CP60 verifica el mensaje y CP61 el detalle con nombre y conteo.
+- 2026-08-19 — T16-D1: el `PUT` de presupuestos recibe `{ categorias: [...] }` y responde `{ categorias: [...] }`; un cuerpo sin esa clave se trata como lista vacía, que el dominio resuelve por R1.11 (mes sin gastos queda sin presupuesto) o rechaza por R1.8 (si quita categorías con gastos). No se inventó un error HTTP nuevo para "cuerpo con forma inesperada": el catálogo de errores es el del dominio.
+- 2026-08-19 — Observación del verificador registrada: `crearServidor` envuelve el handler con un catch que responde `500 "Error interno."` ante excepciones no previstas (p. ej. un repositorio que lanza). Es plomería defensiva sin CP —ningún requisito la fija— y se deja porque la alternativa es que una promesa rechazada tumbe el proceso; no tiene test porque provocar ese camino exigiría un repositorio saboteado, y el catálogo de errores del dominio nunca pasa por ahí.
 
 ### T17 — Servidor HTTP: rutas de copiar y de gastos
 
@@ -772,6 +775,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T12-D1 | T12 | `RepositorioMemoria` clona en `leer`/`escribir` para igualar la semántica del repositorio de archivo (ver bitácora T12) | 2026-08-19 |
 | T14-D1 | T14 | El tipo `CasosUso` se declara parcial en T14 y se completa en T15, sin stubs (ver bitácora T14) | 2026-08-19 |
 | T15-D1 | T15 | El caso de uso elige el presupuesto con `fecha.slice(0, 7)` sin pre-validar: el dominio valida la fecha primero (ver bitácora T15) | 2026-08-19 |
+| T16-D1 | T16 | El `PUT` de presupuestos usa `{ categorias }` en ambos sentidos; cuerpo sin esa clave = lista vacía, sin error HTTP nuevo (ver bitácora T16) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 
