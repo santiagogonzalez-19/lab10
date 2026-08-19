@@ -289,7 +289,7 @@ CP27 y CP29 son los dos casos que materializan las decisiones D3 y D4: si alguna
 
 ### T9 — Rechazar los gastos inválidos
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -305,13 +305,14 @@ CP28 es la integridad referencial de BR4 en el momento de escribir: es lo que ga
 
 *Hecho cuando:*
 
-- [ ] CP28, CP30 y CP31 fallan: hoy el gasto se registraría igual
-- [ ] Los tres pasan
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP28, CP30 y CP31 fallan: hoy el gasto se registraría igual
+- [x] Los tres pasan
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
 
-*(la llena la implementación)*
+- 2026-08-19 — Rojo verificado tal como el plan lo predijo: los tres CP fallaron contra el `registrarGasto` de T8, que registraba igual. Verde agregando las validaciones de monto y el rechazo `CATEGORIA_SIN_PRESUPUESTO` cuando `buscarCategoria` no encuentra la categoría en el presupuesto del mes de la fecha (BR4); el camino provisional de T8 (`?? entrada.categoria`) quedó eliminado.
+- 2026-08-19 — T9-D1: orden de validación dentro de `registrarGasto`: fecha → monto entero → monto positivo → categoría en el presupuesto. La fecha va primero porque el mes derivado hace falta para el mensaje de `CATEGORIA_SIN_PRESUPUESTO`; entero antes que positivo replica el orden de `validarCategorias` (T2) para que los dos validadores de dinero cuenten la misma historia. Ningún CP fija el orden; queda registrado para que T16 no lo re-decida al mapear códigos.
 
 ### T10 — Listar los gastos de un mes en orden
 
@@ -755,6 +756,7 @@ Ningún criterio queda sin tarea. Cuando una tarea aparece varias veces es porqu
 | T1-D1 | T1 | Validación de calendario con tabla de días y bisiestos propia, sin `Date` (ver bitácora T1) | 2026-08-19 |
 | T2-D1 | T2 | `NOMBRE_DUPLICADO` informa el nombre tal como se escribió primero, no el del choque (ver bitácora T2) | 2026-08-19 |
 | T7-D1 | T7 | Orden de rechazos al copiar: `MESES_IGUALES` → `DESTINO_NO_VACIO` → `ORIGEN_SIN_PRESUPUESTO` (ver bitácora T7) | 2026-08-19 |
+| T9-D1 | T9 | Orden de validación al registrar: fecha → monto entero → monto positivo → categoría (ver bitácora T9) | 2026-08-19 |
 
 ## 7. Desvíos del diseño
 

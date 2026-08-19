@@ -62,6 +62,38 @@ describe("registrarGasto", () => {
     if (resultado.ok) expect(resultado.valor.descripcion).toBe("");
   });
 
+  it("CP28 — gasto en 'Ocio' cuando junio no tiene esa categoría → CATEGORIA_SIN_PRESUPUESTO", () => {
+    const resultado = registrarGasto(
+      { categoria: "Ocio", monto: 10000, fecha: "2026-06-28" },
+      presupuestoJunio,
+      "g1",
+    );
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) expect(resultado.error.codigo).toBe("CATEGORIA_SIN_PRESUPUESTO");
+  });
+
+  it("CP30 — monto 0 y -5000 → MONTO_NO_POSITIVO", () => {
+    for (const monto of [0, -5000]) {
+      const resultado = registrarGasto(
+        { categoria: "Comida", monto, fecha: "2026-06-28" },
+        presupuestoJunio,
+        "g1",
+      );
+      expect(resultado.ok).toBe(false);
+      if (!resultado.ok) expect(resultado.error.codigo).toBe("MONTO_NO_POSITIVO");
+    }
+  });
+
+  it("CP31 — monto 25000.5 → MONTO_NO_ENTERO", () => {
+    const resultado = registrarGasto(
+      { categoria: "Comida", monto: 25000.5, fecha: "2026-06-28" },
+      presupuestoJunio,
+      "g1",
+    );
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) expect(resultado.error.codigo).toBe("MONTO_NO_ENTERO");
+  });
+
   it("CP33 — dos gastos idénticos → dos registros con ids distintos", () => {
     const entrada = {
       categoria: "Comida",
