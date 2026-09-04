@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pencil": {
+      "type": "stdio",
+      "command": "${PENCIL_MCP_BIN}",
+      "args": ["--app", "desktop"],
+      "env": {}
+    }
+  }
+}
