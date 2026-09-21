@@ -1,136 +1,38 @@
-// Conecta los eventos de la pantalla con la API y la vista.
+// Router: lee el fragmento de la URL, decide que pantalla toca y la monta.
 
-import {
-  borrarGasto,
-  copiarLimites,
-  fijarLimites,
-  listarGastos,
-  registrarGasto,
-  verMes,
-  type EntradaGasto,
-  type VistaMes,
-} from "./api";
-import {
-  dibujarAvisoDeGasto,
-  dibujarEditor,
-  dibujarError,
-  dibujarErrorDeEditor,
-  dibujarErrorDeGasto,
-  dibujarFormularioGasto,
-  dibujarListaDeGastos,
-  dibujarMes,
-} from "./vista";
+import "./ds/tokens.css";
+import "./ds/base.css";
+import "./ds/componentes.css";
+import "./onboarding/pantallas.css";
 
-const selector = document.querySelector<HTMLInputElement>("#selector-mes");
-const contenido = document.querySelector<HTMLElement>("#contenido");
-if (!selector || !contenido) throw new Error("Falta el andamiaje del index.html");
-const raiz = contenido;
+import { montarConoceme } from "./onboarding/conoceme";
+import { montarLogin } from "./onboarding/login";
+import { montarPerfil } from "./onboarding/perfil";
+import { montarPlan } from "./onboarding/plan";
+import { pantallaDe, RUTA, type Pantalla } from "./rutas";
 
-function mesActual(): string {
-  const hoy = new Date();
-  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+const raiz = document.querySelector<HTMLElement>("#onboarding");
+if (!raiz) throw new Error("Falta el andamiaje del index.html");
+const onboarding = raiz;
+
+function navegar(destino: Pantalla): void {
+  location.hash = RUTA[destino];
 }
 
-async function cargarMes(mes: string): Promise<void> {
-  const resultado = await verMes(mes);
-  if (!resultado.ok) {
-    raiz.replaceChildren();
-    dibujarError(raiz, resultado.error);
-    return;
-  }
-  dibujarMes(raiz, resultado.valor, {
-    alCopiar: (origen) => void copiar(mes, origen),
-    alEditar: () => abrirEditor(mes, resultado.valor),
-  });
-  if (resultado.valor.categorias.length > 0) {
-    dibujarFormularioGasto(
-      raiz,
-      resultado.valor.categorias.map((c) => c.categoria),
-      { alRegistrar: (entrada) => void registrar(mes, entrada) },
-    );
-  }
-  const gastos = await listarGastos(mes);
-  if (gastos.ok) {
-    // La lista llega ya ordenada de la API (CP68); un mes sin gastos trae [].
-    dibujarListaDeGastos(raiz, gastos.valor.gastos, {
-      alBorrar: (id) => void borrar(mes, id),
-    });
-  } else {
-    dibujarError(raiz, gastos.error);
-  }
+// Cada pantalla se monta de cero: lo escrito o elegido en la anterior no
+// sobrevive, que es lo correcto mientras no haya donde guardarlo.
+const MONTAR: Record<Pantalla, (raiz: HTMLElement, ir: (p: Pantalla) => void) => void> = {
+  login: montarLogin,
+  perfil: montarPerfil,
+  conoceme: montarConoceme,
+  plan: montarPlan,
+};
+
+function mostrar(pantalla: Pantalla): void {
+  document.documentElement.dataset["pantalla"] = pantalla;
+  window.scrollTo({ top: 0 });
+  MONTAR[pantalla](onboarding, navegar);
 }
 
-async function borrar(mes: string, id: string): Promise<void> {
-  const resultado = await borrarGasto(id);
-  if (!resultado.ok) {
-    dibujarError(raiz, resultado.error);
-    return;
-  }
-  // Tras borrar, el consumo actualizado se vuelve a pedir a la API,
-  // no se recalcula en la vista (riesgo de design.md §10).
-  await cargarMes(mes);
-}
-
-async function registrar(mesEnPantalla: string, entrada: EntradaGasto): Promise<void> {
-  const resultado = await registrarGasto(entrada);
-  if (!resultado.ok) {
-    // «Defínelo primero»: el 400 de R3.3 enlaza a la pantalla de límites (T23)
-    // del MES DE LA FECHA del gasto, que es donde falta el límite.
-    const mesDeLaFecha = entrada.fecha.slice(0, 7);
-    dibujarErrorDeGasto(raiz, resultado.error, () => void editarLimitesDe(mesDeLaFecha));
-    return;
-  }
-  await cargarMes(mesEnPantalla); // las barras se actualizan
-  dibujarAvisoDeGasto(raiz, resultado.valor.consumo); // el aviso, de la respuesta del POST
-}
-
-async function editarLimitesDe(mes: string): Promise<void> {
-  const resultado = await verMes(mes);
-  if (!resultado.ok) {
-    raiz.replaceChildren();
-    dibujarError(raiz, resultado.error);
-    return;
-  }
-  if (selector) selector.value = mes;
-  abrirEditor(mes, resultado.valor);
-}
-
-function abrirEditor(mes: string, vista: VistaMes): void {
-  // El editor parte de los límites actuales: la vista del mes ya los trae.
-  const actuales = vista.categorias.map((c) => ({ nombre: c.categoria, limite: c.limite }));
-  dibujarEditor(raiz, mes, actuales, {
-    alGuardar: (categorias) => void guardarLimites(mes, categorias),
-    alCancelar: () => void cargarMes(mes),
-  });
-}
-
-async function guardarLimites(
-  mes: string,
-  categorias: { nombre: string; limite: number }[],
-): Promise<void> {
-  const resultado = await fijarLimites(mes, categorias);
-  if (!resultado.ok) {
-    // 400: se corrige el formulario, que queda en pantalla con el mensaje.
-    // 409: el conflicto es con los gastos guardados; se ofrece revisarlos.
-    dibujarErrorDeEditor(raiz, resultado.error, () => void cargarMes(mes));
-    return;
-  }
-  await cargarMes(mes);
-}
-
-async function copiar(destino: string, origen: string): Promise<void> {
-  const resultado = await copiarLimites(destino, origen);
-  if (!resultado.ok) {
-    // El 409 llega con su mensaje ("... ya tiene límites definidos" /
-    // "... no tiene presupuesto que copiar"): se muestra tal cual.
-    dibujarError(raiz, resultado.error);
-    return;
-  }
-  await cargarMes(destino);
-}
-
-selector.value = mesActual();
-selector.addEventListener("change", () => {
-  if (selector.value) void cargarMes(selector.value);
-});
-void cargarMes(selector.value);
+window.addEventListener("hashchange", () => mostrar(pantallaDe(location.hash)));
+mostrar(pantallaDe(location.hash));

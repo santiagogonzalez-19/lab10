@@ -1,0 +1,956 @@
+/* Piezas propias de "Know Me" y "Plan": lo que no es un control reutilizable. */
+
+/* ============ Variantes de la cabecera ============ */
+#onboarding .cabecera[data-variante="conoceme"] {
+  padding: 20px 48px;
+  border-bottom: 0;
+}
+
+#onboarding .cabecera[data-variante="plan"] {
+  padding: 18px 40px;
+}
+
+#onboarding .cabecera[data-variante="conoceme"] .paso,
+#onboarding .cabecera[data-variante="conoceme"] .paso__punto {
+  font-size: 14px;
+}
+
+#onboarding .cabecera[data-variante="conoceme"] .paso[data-estado="actual"] {
+  color: var(--text-primary);
+}
+
+#onboarding .cabecera[data-variante="conoceme"] .paso[data-estado="actual"] .paso__punto,
+#onboarding .cabecera[data-variante="plan"] .paso[data-estado="actual"] .paso__punto {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+#onboarding .cabecera[data-variante="conoceme"] .paso[data-estado="pendiente"] .paso__punto {
+  border-color: transparent;
+  background: var(--surface-soft);
+}
+
+#onboarding .cabecera[data-variante="plan"] .paso {
+  color: var(--text-primary);
+}
+
+#onboarding .cabecera[data-variante="plan"] .paso[data-estado="actual"] {
+  color: var(--text-primary);
+}
+
+#onboarding .cabecera[data-variante="conoceme"] .conector[data-hecho],
+#onboarding .cabecera[data-variante="plan"] .conector[data-hecho] {
+  background: var(--border);
+}
+
+/* ============ Pantalla 3 · Know Me ============ */
+#onboarding .pantalla-conoceme,
+#onboarding .pantalla-plan {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+#onboarding .envoltorio {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 48px 40px;
+}
+
+#onboarding .columna-ancha {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: var(--columna-ancha);
+}
+
+#onboarding .zonas {
+  display: flex;
+  gap: 24px;
+}
+
+#onboarding .bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+}
+
+#onboarding .bloque--subida {
+  flex: 1;
+  min-width: 0;
+}
+
+#onboarding .bloque__encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#onboarding .bloque__titulo {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+#onboarding .bloque__subtitulo {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* --- Zona de arrastre --- */
+#onboarding .zona-suelta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  text-align: center;
+}
+
+#onboarding .zona-suelta[data-encima] {
+  background: var(--surface-soft);
+}
+
+#onboarding .zona-suelta__circulo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--surface-soft);
+  color: var(--accent);
+}
+
+#onboarding .zona-suelta__titulo {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+#onboarding .zona-suelta__formatos {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+#onboarding .boton-pildora {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 10px 18px;
+  background: var(--accent);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+  color: var(--text-inverse);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* --- Lista de archivos --- */
+#onboarding .archivos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#onboarding .archivos__etiqueta {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+#onboarding .archivo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+#onboarding .archivo__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-soft);
+  color: var(--accent);
+}
+
+#onboarding .archivo__meta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+#onboarding .archivo__nombre {
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#onboarding .archivo__tamano {
+  font-family: var(--font-data);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+#onboarding .insignia {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: var(--surface-sage);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+#onboarding .insignia--subiendo {
+  background: var(--surface-soft);
+}
+
+#onboarding .archivo__quitar {
+  display: flex;
+  flex: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* --- Panorama financiero --- */
+#onboarding .bloque--snapshot {
+  width: 400px;
+  flex: none;
+  gap: 18px;
+}
+
+#onboarding .snapshot__encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#onboarding .snapshot__titulo {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+#onboarding .etiqueta-generado {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+#onboarding .figuras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#onboarding .figuras__fila {
+  display: flex;
+  gap: 10px;
+}
+
+#onboarding .figura {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+#onboarding .figura__valor {
+  font-family: var(--font-data);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+#onboarding .figura__leyenda {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+#onboarding .figura--destacada {
+  background: var(--surface-inverse);
+}
+
+#onboarding .figura--destacada .figura__valor {
+  color: var(--text-inverse);
+}
+
+#onboarding .figura--destacada .figura__leyenda {
+  color: var(--surface-sage);
+}
+
+#onboarding .barras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+#onboarding .barras__titulo,
+#onboarding .destacados__titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+#onboarding .barra {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#onboarding .barra__fila {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+#onboarding .barra__monto {
+  font-family: var(--font-data);
+  color: var(--text-primary);
+}
+
+#onboarding .barra__pista {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-soft);
+  overflow: hidden;
+}
+
+#onboarding .barra__relleno {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+}
+
+#onboarding .destacados {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+#onboarding .destacado {
+  display: flex;
+  gap: 9px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+#onboarding .destacado--aviso .icono {
+  color: var(--danger);
+}
+
+#onboarding .destacado .icono {
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+/* --- Alta manual --- */
+#onboarding .manual__encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+#onboarding .manual__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#onboarding .manual__titulo {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+#onboarding .manual__sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+#onboarding .conmutador {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-full);
+  background: var(--surface-soft);
+}
+
+#onboarding .conmutador__opcion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  background: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#onboarding .conmutador__opcion[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+#onboarding .conmutador__opcion[data-tipo="expense"] .icono {
+  color: var(--danger);
+}
+
+#onboarding .conmutador__opcion[data-tipo="income"] .icono {
+  color: var(--positive);
+}
+
+#onboarding .fila-formulario {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+#onboarding .campo-corto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+#onboarding .campo-corto--ancho {
+  flex: 1;
+}
+
+#onboarding .campo-corto__etiqueta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+#onboarding .campo-corto__caja {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+#onboarding .campo-corto__caja:focus-within {
+  border-color: var(--accent);
+}
+
+#onboarding .campo-corto__caja > input,
+#onboarding .campo-corto__caja > select {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  appearance: none;
+}
+
+#onboarding .campo-corto__caja > input:focus,
+#onboarding .campo-corto__caja > select:focus {
+  outline: none;
+}
+
+#onboarding .campo-corto__caja > input::placeholder,
+#onboarding .campo-corto__caja > select:invalid {
+  color: var(--text-muted);
+}
+
+#onboarding .campo-corto__caja .icono {
+  color: var(--text-muted);
+}
+
+#onboarding .boton-agregar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  border: 0;
+  border-radius: var(--radius-lg);
+  padding: 12px 20px;
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#onboarding .boton-agregar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#onboarding .recientes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#onboarding .recientes__etiqueta {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+#onboarding .movimiento {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-soft);
+}
+
+#onboarding .movimiento__izquierda {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+#onboarding .movimiento__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+#onboarding .movimiento[data-tipo="expense"] .movimiento__icono .icono {
+  color: var(--danger);
+}
+
+#onboarding .movimiento[data-tipo="income"] .movimiento__icono .icono {
+  color: var(--positive);
+}
+
+#onboarding .movimiento__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+#onboarding .movimiento__desc {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+#onboarding .movimiento__cat {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+#onboarding .movimiento__monto {
+  flex: none;
+  font-family: var(--font-data);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+#onboarding .movimiento[data-tipo="income"] .movimiento__monto {
+  color: var(--positive);
+}
+
+#onboarding .vacio {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ============ Pantalla 4 · Plan ============ */
+#onboarding .cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px 48px;
+}
+
+#onboarding .titular--plan .titular__titulo {
+  font-size: 30px;
+}
+
+#onboarding .titular--plan .titular__subtitulo {
+  font-size: 15px;
+}
+
+#onboarding .heroe {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 28px;
+  border-radius: var(--radius-2xl);
+  background: var(--surface-inverse);
+  color: var(--text-inverse);
+}
+
+#onboarding .heroe__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#onboarding .heroe__cejilla {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--surface-sage);
+}
+
+#onboarding .heroe__nombre {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+#onboarding .heroe__meta {
+  font-size: 14px;
+  color: var(--surface-sage);
+}
+
+#onboarding .heroe__cifras {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+#onboarding .cifra {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#onboarding .cifra__valor {
+  font-family: var(--font-data);
+  font-size: 26px;
+  font-weight: 600;
+}
+
+#onboarding .cifra__etiqueta {
+  font-size: 12px;
+  color: var(--surface-sage);
+}
+
+#onboarding .pildora-estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#onboarding .grid-plan {
+  display: flex;
+  flex: 1;
+  gap: 24px;
+}
+
+#onboarding .bloque--grafico {
+  flex: 1;
+  min-width: 0;
+  gap: 20px;
+}
+
+#onboarding .grafico__encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+#onboarding .grafico__titulos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#onboarding .grafico__titulo {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+#onboarding .grafico__sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+#onboarding .leyenda {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+#onboarding .leyenda__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+#onboarding .muestra {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 3px;
+}
+
+#onboarding .muestra--needs { background: var(--chart-needs); }
+#onboarding .muestra--wants { background: var(--chart-wants); }
+#onboarding .muestra--savings { background: var(--chart-savings); }
+
+#onboarding .grafico__area {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+#onboarding .grafico__barras {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 300px;
+}
+
+#onboarding .grafico__barra {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  min-width: 0;
+}
+
+#onboarding .segmento-barra--savings {
+  border-radius: 5px 5px 0 0;
+  background: var(--chart-savings);
+}
+
+#onboarding .segmento-barra--wants {
+  background: var(--chart-wants);
+}
+
+#onboarding .segmento-barra--needs {
+  border-radius: 0 0 5px 5px;
+  background: var(--chart-needs);
+}
+
+#onboarding .grafico__meses {
+  display: flex;
+  gap: 12px;
+}
+
+#onboarding .grafico__mes {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+#onboarding .lado {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 380px;
+  flex: none;
+}
+
+#onboarding .bloque--asignacion {
+  gap: 18px;
+  padding: 24px;
+}
+
+#onboarding .asignacion__encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#onboarding .asignacion__titulo,
+#onboarding .consejos__titulo {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+#onboarding .asignacion__sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+#onboarding .asignacion__barra {
+  display: flex;
+  height: 16px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+#onboarding .asignacion__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#onboarding .asignacion__fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#onboarding .asignacion__nombre {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+#onboarding .asignacion__monto {
+  font-family: var(--font-data);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+#onboarding .asignacion__pct {
+  width: 40px;
+  flex: none;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+#onboarding .consejos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  border-radius: var(--radius-2xl);
+  background: var(--surface-soft);
+}
+
+#onboarding .consejo {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+#onboarding .consejo .icono {
+  color: var(--accent);
+  margin-top: 1px;
+}
+
+#onboarding .boton-final {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 14px 26px;
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* El mockup solo define el escritorio. Por debajo de 1100 px las dos columnas
+   de estas pantallas se apilan para que sigan siendo usables. */
+@media (max-width: 1100px) {
+  #onboarding .zonas,
+  #onboarding .grid-plan {
+    flex-direction: column;
+  }
+
+  #onboarding .bloque--snapshot,
+  #onboarding .lado {
+    width: 100%;
+  }
+
+  #onboarding .envoltorio,
+  #onboarding .cuerpo {
+    padding: 24px;
+  }
+}

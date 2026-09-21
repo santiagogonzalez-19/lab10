@@ -1,0 +1,102 @@
+/* Armazon de las dos pantallas. Todo cuelga de #onboarding. */
+
+html {
+  color-scheme: light;
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+#onboarding {
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+#onboarding *,
+#onboarding *::before,
+#onboarding *::after {
+  box-sizing: border-box;
+}
+
+#onboarding h1,
+#onboarding h2,
+#onboarding h3,
+#onboarding p {
+  margin: 0;
+}
+
+#onboarding :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#onboarding .icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+/* --- Pantalla de acceso: dos paneles que llenan el alto, con marco de 48 --- */
+#onboarding .pantalla-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--marco);
+}
+
+#onboarding .login-grid {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  max-width: calc(1440px - var(--marco) * 2);
+  min-height: calc(100vh - var(--marco) * 2);
+}
+
+#onboarding .login-grid > * {
+  flex: 1;
+  min-width: 0;
+}
+
+/* El mockup solo define el escritorio. Por debajo de 900 px los paneles se
+   apilan para que la pantalla siga siendo usable. */
+@media (max-width: 900px) {
+  #onboarding .pantalla-login {
+    padding: 24px;
+  }
+
+  #onboarding .login-grid {
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
+/* --- Pantalla de perfil: cabecera fija arriba y columna centrada --- */
+#onboarding .pantalla-perfil {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+#onboarding .contenido {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  padding: 32px 40px;
+}
+
+#onboarding .columna {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: var(--columna-perfil);
+}

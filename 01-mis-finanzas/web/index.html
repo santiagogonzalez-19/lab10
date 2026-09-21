@@ -1,76 +1,18 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mis finanzas — presupuesto mensual</title>
-    <style>
-      :root {
-        --ok: #2e7d32;
-        --alerta: #b26a00;
-        --excedido: #c62828;
-        --borde: #ddd;
-        --fondo-barra: #eee;
-        color-scheme: light;
-      }
-      * { box-sizing: border-box; }
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        margin: 0 auto;
-        max-width: 720px;
-        padding: 1.5rem 1rem 4rem;
-        color: #222;
-      }
-      h1 { font-size: 1.4rem; }
-      header { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-      header input[type="month"] { font-size: 1rem; padding: 0.3rem; }
-      section { margin-top: 1.5rem; }
-      .categoria { border: 1px solid var(--borde); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; }
-      .categoria .fila { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-      .categoria .nombre { font-weight: 600; }
-      .barra { background: var(--fondo-barra); border-radius: 4px; height: 10px; margin-top: 0.5rem; overflow: hidden; }
-      .barra > div { height: 100%; }
-      .estado-ok .barra > div { background: var(--ok); }
-      .estado-alerta .barra > div { background: var(--alerta); }
-      .estado-excedido .barra > div { background: var(--excedido); }
-      .estado-excedido { border-color: var(--excedido); background: #fff5f5; }
-      .exceso { color: var(--excedido); font-weight: 600; }
-      .alerta-texto { color: var(--alerta); font-weight: 600; }
-      .detalle { color: #555; font-size: 0.9rem; margin-top: 0.25rem; }
-      .vacio { border: 1px dashed var(--borde); border-radius: 8px; padding: 2rem 1rem; text-align: center; color: #555; }
-      button { font-size: 1rem; padding: 0.45rem 0.9rem; border-radius: 6px; border: 1px solid #888; background: #fafafa; cursor: pointer; }
-      button:hover { background: #f0f0f0; }
-      .mensaje-error { color: var(--excedido); margin-top: 0.75rem; }
-      .editor .fila-editor { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
-      .editor input { font-size: 1rem; padding: 0.35rem; border: 1px solid var(--borde); border-radius: 6px; }
-      .editor .campo-nombre { flex: 2; }
-      .editor .campo-limite { flex: 1; }
-      .botones { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
-      .editor .botones { justify-content: flex-start; }
-      .form-gasto { margin-top: 2rem; border-top: 1px solid var(--borde); padding-top: 1rem; }
-      .form-gasto h2 { font-size: 1.1rem; }
-      .form-gasto input, .form-gasto select { font-size: 1rem; padding: 0.35rem; border: 1px solid var(--borde); border-radius: 6px; }
-      .aviso-gasto { padding: 0.6rem 1rem; border-radius: 6px; background: #eef7ee; border: 1px solid var(--ok); }
-      .aviso-gasto.aviso-excedido { background: #fff5f5; border-color: var(--excedido); color: var(--excedido); font-weight: 600; }
-      .aviso-gasto.aviso-alerta { background: #fff8ec; border-color: var(--alerta); color: var(--alerta); font-weight: 600; }
-      .lista-gastos { margin-top: 2rem; border-top: 1px solid var(--borde); padding-top: 1rem; }
-      .lista-gastos h2 { font-size: 1.1rem; }
-      .fila-gasto { display: flex; gap: 0.75rem; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--fondo-barra); }
-      .fila-gasto .gasto-fecha { color: #555; }
-      .fila-gasto .gasto-categoria { font-weight: 600; }
-      .fila-gasto .gasto-monto { margin-left: auto; }
-      .fila-gasto .gasto-descripcion { color: #555; font-size: 0.9rem; }
-    </style>
+    <title>Northstar — build the financial future you deserve</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap"
+    />
   </head>
   <body>
-    <header>
-      <h1>Presupuesto mensual</h1>
-      <label>
-        Mes:
-        <input type="month" id="selector-mes" />
-      </label>
-    </header>
-    <main id="contenido"></main>
+    <div id="onboarding"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

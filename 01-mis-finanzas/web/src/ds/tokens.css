@@ -1,0 +1,42 @@
+/* Valores visuales del mockup (docs/mockups/onboarding.pen), en un unico
+   origen. Ningun componente define un color literal propio. */
+
+:root {
+  --bg: #edeeee;
+  --surface: #ffffff;
+  --surface-sage: #d6f7e6;
+  --surface-inverse: #297373;
+  --surface-soft: #e4f3ec;
+
+  --text-primary: #39393a;
+  --text-secondary: #297373;
+  --text-muted: #7c8c8c;
+  --text-inverse: #ffffff;
+
+  --accent: #297373;
+  --border: #d6d9d8;
+  --danger: #ff8552;
+  --positive: #17936a;
+
+  /* Los tres colores del grafico y de la barra de asignacion (pantalla 4).
+     El mockup los escribe literales; aca viven con los demas. */
+  --chart-needs: #c7ead9;
+  --chart-wants: #85ffc7;
+  --chart-savings: #297373;
+
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* Las familias de reserva importan: si Google Fonts no responde, el texto
+     se dibuja con estas y el layout no se rompe. */
+  --font-heading: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --marco: 48px;
+  --columna-ancha: 1080px;
+  --columna-perfil: 760px;
+  --formulario: 420px;
+}

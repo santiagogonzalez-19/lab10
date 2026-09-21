@@ -1,0 +1,627 @@
+/* Los controles del mockup. El estado seleccionado se lee de los atributos
+   ARIA, no de una clase: una sola verdad en el DOM. */
+
+/* --- Panel de marca (izquierda del acceso) --- */
+#onboarding .panel-marca {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 56px;
+  border-radius: var(--radius-2xl);
+  background: var(--surface-inverse);
+  color: var(--text-inverse);
+}
+
+#onboarding .marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#onboarding .marca__nombre {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+#onboarding .propuesta {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#onboarding .propuesta__titulo {
+  font-family: var(--font-heading);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+#onboarding .propuesta__texto {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--surface-sage);
+}
+
+#onboarding .garantias {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#onboarding .garantia {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+}
+
+#onboarding .garantia__punto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+/* --- Panel del formulario (derecha del acceso) --- */
+#onboarding .panel-formulario {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px;
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+}
+
+#onboarding .formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: var(--formulario);
+}
+
+#onboarding .formulario__encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#onboarding .formulario__titulo {
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 600;
+}
+
+#onboarding .formulario__subtitulo {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+#onboarding .campos {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* --- Campo de texto --- */
+#onboarding .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#onboarding .campo__etiqueta {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+#onboarding .campo__caja {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+#onboarding .campo__caja:focus-within {
+  border-color: var(--accent);
+}
+
+#onboarding .campo__entrada {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 15px;
+}
+
+#onboarding .campo__entrada:focus {
+  outline: none;
+}
+
+#onboarding .campo__entrada::placeholder {
+  color: var(--text-muted);
+}
+
+#onboarding .campo__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+#onboarding .campo__toggle .icono {
+  color: var(--text-muted);
+}
+
+#onboarding .campo__error {
+  font-size: 13px;
+  color: var(--danger);
+}
+
+#onboarding .campo[data-error] .campo__caja {
+  border-color: var(--danger);
+}
+
+/* --- Opciones del acceso --- */
+#onboarding .opciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#onboarding .casilla {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#onboarding .casilla__marca {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-inverse);
+}
+
+#onboarding .casilla[aria-checked="true"] .casilla__marca {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+#onboarding .casilla[aria-checked="false"] .casilla__marca .icono {
+  visibility: hidden;
+}
+
+#onboarding .enlace {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* --- Botones --- */
+#onboarding .boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#onboarding .boton--primario {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+#onboarding .boton--secundario {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+#onboarding .boton--secundario .marca-google {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+#onboarding .boton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* --- Divisor --- */
+#onboarding .divisor {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+#onboarding .divisor::before,
+#onboarding .divisor::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+#onboarding .pie {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+#onboarding .pie .enlace {
+  font-weight: 600;
+}
+
+/* --- Cabecera del onboarding --- */
+#onboarding .cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+#onboarding .cabecera__marca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+#onboarding .cabecera__marca .icono {
+  color: var(--accent);
+}
+
+#onboarding .pasos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#onboarding .paso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+#onboarding .paso__punto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: var(--font-data);
+  font-size: 12px;
+}
+
+#onboarding .paso[data-estado="hecho"] .paso__punto {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+#onboarding .paso[data-estado="hecho"] {
+  color: var(--text-secondary);
+}
+
+#onboarding .paso[data-estado="actual"] .paso__punto {
+  border-width: 2px;
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+#onboarding .paso[data-estado="actual"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+#onboarding .conector {
+  width: 28px;
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+}
+
+#onboarding .conector[data-hecho] {
+  background: var(--accent);
+}
+
+/* --- Encabezado de la pagina de perfil --- */
+#onboarding .titular {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#onboarding .titular__titulo {
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 600;
+}
+
+#onboarding .titular__subtitulo {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+/* --- Tarjeta de pregunta --- */
+#onboarding .tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+}
+
+#onboarding .tarjeta__encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#onboarding .tarjeta__pregunta {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+#onboarding .tarjeta__pista {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* --- Lista de opciones con radio --- */
+#onboarding .opcion-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#onboarding .opcion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+#onboarding .opcion__radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--text-muted);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--text-inverse);
+}
+
+#onboarding .opcion[aria-checked="true"] {
+  border-width: 2px;
+  border-color: var(--accent);
+  background: var(--surface-soft);
+  font-weight: 600;
+}
+
+#onboarding .opcion[aria-checked="true"] .opcion__radio {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+#onboarding .opcion[aria-checked="false"] .opcion__radio .icono {
+  visibility: hidden;
+}
+
+/* --- Segmentado --- */
+#onboarding .segmentado {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-xl);
+  background: var(--surface-soft);
+}
+
+#onboarding .segmento {
+  flex: 1;
+  border: 0;
+  border-radius: var(--radius-lg);
+  padding: 10px 16px;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+#onboarding .segmento[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-weight: 600;
+}
+
+#onboarding .descriptor {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* --- Fichas (fuentes de ingreso) --- */
+/* El mockup las agrupa en dos filas explicitas de tres, no en un wrap. */
+#onboarding .fichas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#onboarding .fichas__fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+#onboarding .ficha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#onboarding .ficha .icono {
+  color: var(--text-muted);
+}
+
+#onboarding .ficha[aria-checked="true"] {
+  border-width: 2px;
+  border-color: var(--accent);
+  background: var(--surface-soft);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 8px 13px;
+}
+
+#onboarding .ficha[aria-checked="true"] .icono {
+  color: var(--accent);
+}
+
+/* --- Pie de la pagina de perfil --- */
+#onboarding .acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+#onboarding .boton-texto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 12px 18px;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+#onboarding .boton-continuar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 13px 26px;
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#onboarding .boton-continuar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Los iconos que alternan con el estado se dibujan los dos y se muestra uno:
+   asi no hay que reemplazar nodos al repintar. */
+#onboarding .icono--alterno {
+  display: none;
+}
+
+#onboarding .ficha[aria-checked="true"] .icono--alterno,
+#onboarding .campo__toggle[data-visible] .icono--alterno {
+  display: inline-flex;
+}
+
+#onboarding .ficha[aria-checked="true"] .icono--base,
+#onboarding .campo__toggle[data-visible] .icono--base {
+  display: none;
+}
