@@ -23,3 +23,9 @@ datos/
 # Artefactos de verificacion manual con Playwright MCP
 .playwright-mcp/
 **/.playwright-mcp/
+
+# Salidas de los E2E de Playwright (reporte y trazas de corridas fallidas)
+test-results/
+playwright-report/
+**/test-results/
+**/playwright-report/

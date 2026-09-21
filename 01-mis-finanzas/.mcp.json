@@ -5,6 +5,12 @@
       "command": "${PENCIL_MCP_BIN}",
       "args": ["--app", "desktop"],
       "env": {}
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "env": {}
     }
   }
 }
