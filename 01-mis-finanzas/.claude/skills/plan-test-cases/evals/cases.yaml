@@ -1,0 +1,114 @@
+# Lint estructural y casos de disparo del skill `plan-test-cases`.
+#
+# Se corre con:  python3 ../../lint_skill.py plan-test-cases
+
+skill: plan-test-cases
+
+# ── Guardas de la descripción ────────────────────────────────────────────────
+# Esta skill es la primera pieza del loop de `verify-implementation` y vive
+# pegada a las otras dos. La frontera es el artefacto: acá se DECIDE qué probar
+# (un .md), en `generate-tests` se ESCRIBE cómo (un .spec.ts) y en `healer` se
+# CORRE. Si la descripción pierde el "no escribe tests", la skill se cuela en
+# los prompts de generación y produce Playwright sin haber decidido nada.
+description_must_contain:
+  - "e2e-tests-plan.md"    # el único archivo que escribe
+  - "generate-tests"       # el encadenamiento; si se cae, el loop se corta acá
+  - "happy path"           # el caso 1
+  - "dos casos de error"   # el tope de casos: exactamente dos, no "algunos"
+  - "R#.#"                 # la trazabilidad: sin criterio no hay caso
+  - "Playwright"           # para nombrar lo que NO hace
+  - "no escribe tests"     # el corte del final
+
+# Lo que la descripción NO debe recuperar. El scope creep natural de una skill
+# de pruebas es empezar a correrlas y después a arreglarlas.
+description_must_not_contain:
+  - "EARS"            # es de requirements.md, y eso es de `specify`
+  - "e2e-tests-report"  # el reporte es del healer
+  - "arregla"
+  - "commit"
+
+# ── Presupuesto ──────────────────────────────────────────────────────────────
+# ~175 líneas al nacer, y la mitad es la plantilla del plan. El techo hace que
+# el próximo crecimiento sea una decisión y no un descuido.
+max_lines: 240
+max_description_chars: 1100
+
+# Marcadores estructurales. El que más importa es el Paso 2: si desaparece la
+# regla de "exactamente dos errores, de familias distintas", la skill vuelve a
+# producir listas de ocho casos que nadie mantiene.
+must_contain_body:
+  - "## Alcance"
+  - "## Paso 1"
+  - "## Paso 2"
+  - "## Paso 3"
+  - "## Paso 4"
+  - "## Guardarraíles"
+
+# ── Heurística de disparo ────────────────────────────────────────────────────
+# PROXY, no verdad. Lo que detecta de verdad es la colisión con las otras dos
+# piezas del loop: "generá los scripts" es `generate-tests` y "corré los tests"
+# es `healer`. Las tres frases se parecen y tienen dueño distinto.
+heuristic:
+  fire_keywords:
+    ["casos e2e", "casos de prueba", "plan de pruebas", "qué habría que probar",
+     "que habria que probar", "qué hay que probar", "e2e-tests-plan",
+     "casos de uso a probar"]
+  block_keywords:
+    ["generá los scripts", "genera los scripts", "escribí los tests",
+     "escribi los tests", "corré los tests", "corre los tests", reporte,
+     "por qué falla", "arreglá"]
+
+trigger_cases:
+  - id: P1
+    prompt: "Armá los casos E2E del spec de presupuesto mensual"
+    should_fire: true
+  - id: P2
+    prompt: "¿qué habría que probar de esta feature desde el punto de vista del usuario?"
+    should_fire: true
+  - id: P3
+    prompt: "escribí el plan de pruebas de navegador de este spec"
+    should_fire: true
+  - id: P4
+    prompt: "necesito los casos de prueba de usuario antes de automatizar nada"
+    should_fire: true
+  - id: P5
+    prompt: "generá los scripts de Playwright a partir del plan"
+    should_fire: false
+    note: "EL CASO IMPORTANTE: eso es `generate-tests`. Si dispara acá, replanea en vez de generar y el loop pierde una ronda"
+  - id: P6
+    prompt: "corré los tests E2E y decime qué falló"
+    should_fire: false
+    note: "eso es el `healer`; planear de nuevo no dice nada sobre un rojo"
+  - id: P7
+    prompt: "armá el plan de tareas del spec"
+    should_fire: false
+    note: "`plan de tareas` no es `plan de pruebas`: es planning-tasks"
+  - id: P8
+    prompt: "escribí los requisitos de la importación en CSV"
+    should_fire: false
+  - id: P9
+    prompt: "arreglá el selector que rompió en E2"
+    should_fire: false
+
+# ── Casos de comportamiento ──────────────────────────────────────────────────
+# Sin evals.json: verificarlo pide un spec real y una app levantada. Los cinco
+# casos son los modos de fallo que costarían caro.
+behavioral_cases:
+  - id: B1
+    scenario: "Un spec con 40 criterios y 23 tareas Hechas"
+    expect: "escribe EXACTAMENTE tres casos, no una matriz. El happy path es el que más criterios atraviesa, no el más corto"
+  - id: B2
+    scenario: "Los dos mejores candidatos a error son dos variantes de campo inválido"
+    expect: "elige familias distintas: un campo inválido y una regla de negocio. Dos variantes de lo mismo prueban lo mismo dos veces"
+  - id: B3
+    scenario: "Se le pide un caso que requirements.md §2 dejó fuera de alcance"
+    expect: "no lo planea. Lo reporta como hueco del spec y lo manda a /specify"
+  - id: B4
+    scenario: "El plan cita un botón que en web/ se llama distinto"
+    expect: "lo verifica leyendo web/ antes de escribir §5, y lo que no pudo verificar lo marca 'sin verificar' en vez de darlo por bueno"
+  - id: B5
+    scenario: "Las tareas de pantalla del spec no están en Hecha"
+    expect: "para y lo dice. No escribe el plan: un E2E contra una API sin pantalla es un plan de curl disfrazado"
+  - id: B6
+    scenario: "Termina de escribir el plan"
+    expect: "lanza generate-tests apuntando al ARCHIVO, sin resumir los casos en el prompt. Un resumen es una tercera versión del caso que se desvía de las otras dos"

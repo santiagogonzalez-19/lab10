@@ -1,0 +1,121 @@
+# Lint estructural y casos de disparo del skill `verify-implementation`.
+#
+# Se corre con:  python3 ../../lint_skill.py verify-implementation
+
+skill: verify-implementation
+
+# ── Guardas de la descripción ────────────────────────────────────────────────
+# Esta skill vive pegada a `task-verifier` (el subagente) y a la implementación.
+# La frontera es el nivel: el task-verifier audita UNA tarea contra su plan, y
+# esta corre la feature entera en un navegador. Si la descripción pierde el
+# nombre de las tres piezas del loop, deja de ser un orquestador y pasa a ser
+# "correr tests", que es algo que cualquiera hace sin skill.
+description_must_contain:
+  - "plan-test-cases"   # la pieza 1; sin ella el loop arranca sin plan
+  - "generate-tests"    # la pieza 2
+  - "healer"            # la pieza 3, la que emite el veredicto
+  - "Playwright"        # el nivel: navegador, no unitarios
+  - "3 rondas"          # el tope; sin él el "loop autónomo" no termina
+  - "no escribe specs"  # el corte del final
+
+# Lo que la descripción NO debe recuperar. El riesgo de esta skill es tragarse
+# el proceso entero: si empieza a prometer requisitos o planeación, dispara
+# donde le tocaba a /specify o a planning-tasks.
+description_must_not_contain:
+  - "EARS"          # es de requirements.md, y eso es de `specify`
+  - "commit"        # el commit es del usuario, siempre
+  - "brainstorm"
+  - "plan de tareas"
+
+# ── Presupuesto ──────────────────────────────────────────────────────────────
+# ~180 líneas al nacer. El loop tiene cuatro pasos y una tabla de decisión: si
+# crece, casi seguro es porque alguien metió acá el detalle de un subagente.
+max_lines: 240
+max_description_chars: 1200
+
+# Marcadores estructurales. Los dos que más importan son la tabla de decisión
+# del Paso 4 (sin ella el loop no sabe qué hacer con un rojo) y el tope de
+# rondas (sin él, no termina).
+must_contain_body:
+  - "## Paso 0"
+  - "## Paso 1"
+  - "## Paso 2"
+  - "## Paso 3"
+  - "## Paso 4"
+  - "### Arreglar el código"
+  - "### El tope de 3 rondas"
+  - "## Cierre"
+  - "## Guardarraíles"
+
+# ── Heurística de disparo ────────────────────────────────────────────────────
+# PROXY, no verdad. Lo que detecta de verdad es la colisión con `task-verifier`
+# ("verificá T4") y con `planning-tasks` ("armá el plan de tareas"): las dos
+# frases se parecen a esta y tienen dueño distinto.
+heuristic:
+  fire_keywords:
+    ["loop e2e", "verificá la implementación", "verifica la implementación",
+     "en el navegador", "de punta a punta", "end to end", "end-to-end",
+     "terminé de implementar", "termine de implementar", "en hecha",
+     "probá la app", "proba la app"]
+  block_keywords:
+    ["plan de tareas", brainstorm, dimension, requisitos, "design.md",
+     "escribí el spec", "escribi el spec"]
+
+trigger_cases:
+  - id: V1
+    prompt: "Ya terminé de implementar todas las tareas del spec, verificá la implementación"
+    should_fire: true
+  - id: V2
+    prompt: "Corré el loop E2E sobre el presupuesto mensual"
+    should_fire: true
+  - id: V3
+    prompt: "probá esto en el navegador antes de que lo demos por cerrado"
+    should_fire: true
+  - id: V4
+    prompt: "las tareas están todas en Hecha, ¿ahora qué sigue?"
+    should_fire: true
+    note: "la paráfrasis más frecuente al salir de la implementación; no nombra ni E2E ni Playwright"
+  - id: V5
+    prompt: "hay que probar la app end to end antes de cerrar la feature"
+    should_fire: true
+  - id: V6
+    prompt: "verificá que T4 cumple lo que prometía su plan"
+    should_fire: false
+    note: "EL CASO IMPORTANTE: una tarea contra su plan es `task-verifier`, no el loop E2E. Si dispara acá, levanta un navegador para auditar una función pura"
+  - id: V7
+    prompt: "armá el plan de tareas del spec de presupuesto"
+    should_fire: false
+  - id: V8
+    prompt: "escribí los requisitos de la categorización automática"
+    should_fire: false
+  - id: V9
+    prompt: "por qué falla el test de mes.test.ts"
+    should_fire: false
+    note: "un unitario roto se debuggea, no se le arma un loop de tres rondas alrededor"
+  - id: V10
+    prompt: "arrancá con la primera tarea del plan"
+    should_fire: false
+
+# ── Casos de comportamiento ──────────────────────────────────────────────────
+# Sin evals.json: el comportamiento es un loop de tres rondas sobre un repo que
+# muta entre rondas, y no hay harness que lo corra de un tiro. Los cinco casos
+# son los modos de fallo que costarían caro.
+behavioral_cases:
+  - id: B1
+    scenario: "El reporte del healer vuelve `falla-de-test` en E2"
+    expect: "relanza generate-tests con el diagnóstico textual y NO toca el código de la app. Reescribir el criterio o el código acá es el fallo caro"
+  - id: B2
+    scenario: "El reporte vuelve `falla-de-codigo` citando R3.3"
+    expect: "escribe primero el test unitario rojo, arregla el mínimo que R3.3 fija, deja typecheck+test en verde, y escribe la bitácora en tasks.md antes de volver al E2E"
+  - id: B3
+    scenario: "Tercera ronda y el mismo caso sigue rojo"
+    expect: "para. No arranca una cuarta ronda ni relaja el aserto: presenta qué cambió entre rondas y manda el criterio ambiguo a /specify"
+  - id: B4
+    scenario: "El healer señala un comportamiento raro que ningún R#.# cubre"
+    expect: "no lo arregla: lo reporta como alcance nuevo y lo manda a /specify. Un arreglo sin criterio es alcance sin gate"
+  - id: B5
+    scenario: "npm test está rojo antes de entrar al loop"
+    expect: "no entra al loop. Arregla o reporta el nivel unitario primero; un E2E rojo sobre un unitario rojo no agrega información"
+  - id: B6
+    scenario: "El spec tiene tareas sin `Hecha`"
+    expect: "lo dice y pregunta antes de correr, en vez de producir tres rojos que no son defectos"
