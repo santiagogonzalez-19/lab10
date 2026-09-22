@@ -241,7 +241,7 @@
 
 ### T8 — Guarda de re-entrada: bloquear un segundo intento mientras el primero está en vuelo
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -255,12 +255,19 @@
 
 *Hecho cuando:*
 
-- [ ] CP23 falla primero porque `alternarModo` todavía cambia de modo aunque `enviando === true` — la guarda no existe —, y después `alternarModo` devuelve el estado sin cambio alguno mientras hay un intento en vuelo
-- [ ] `puedeEntrar` se renombra a `puedeEnviar`: CP29 fija que devuelve `false` con `enviando === true` aunque los campos sean válidos, y CP30 que devuelve `true` con una clave de tres caracteres — la longitud la juzga el servidor, no el cliente
-- [ ] CP32 y CP33 confirman que `abandonar`/`escribir` y `alternarClaveVisible`/`alternarRecordarme` siguen comportándose igual que hoy una vez que `EstadoLogin` tiene los campos `modo`, `enviando` y `mensaje`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP23 falla primero porque `alternarModo` todavía cambia de modo aunque `enviando === true` — la guarda no existe —, y después `alternarModo` devuelve el estado sin cambio alguno mientras hay un intento en vuelo
+- [x] `puedeEntrar` se renombra a `puedeEnviar`: CP29 fija que devuelve `false` con `enviando === true` aunque los campos sean válidos, y CP30 que devuelve `true` con una clave de tres caracteres — la longitud la juzga el servidor, no el cliente
+- [x] CP32 y CP33 confirman que `abandonar`/`escribir` y `alternarClaveVisible`/`alternarRecordarme` siguen comportándose igual que hoy una vez que `EstadoLogin` tiene los campos `modo`, `enviando` y `mensaje`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
+
+- **2026-09-22** — Leído §6: nada de T1-D1, T2-D1 ni T3-D1 condiciona esta tarea; es puro estado y no toca ni la llave ni el transporte.
+- **2026-09-22** — Rojo: 7 casos nuevos fallan. CP23 es el interesante — `alternarModo` volteaba el modo aunque hubiera un intento en vuelo, que es exactamente el comportamiento que T4 dejó a propósito para que esta tarea tuviera rojo propio.
+- **2026-09-22** — El renombre `puedeEntrar` → `puedeEnviar` tocó tres archivos: el estado, su test y `login.ts`. El `sed` de macOS no soporta `\b`, así que el primer intento no reemplazó nada; se hizo sustitución directa, que es segura porque el identificador es único en el repo. `login.ts` quedó compilando sin más cambios: sigue llamando a la misma función en la misma línea, solo con el nombre nuevo.
+- **2026-09-22** — La guarda quedó en **dos** lugares y no en uno, y conviene que se note: `puedeEnviar` la usa para deshabilitar el botón (R5.1) y `alternarModo` para ignorar el volteo (R5.2). No es duplicación: son dos controles distintos sobre el mismo hecho, y R5.2 existe porque deshabilitar el botón no impide tocar el enlace del pie.
+- **2026-09-22** — CP30 se lee raro a propósito y el comentario del código lo explica: una clave de tres caracteres **habilita** el botón. Es BR2 hecha test — si alguien "mejora" el formulario validando la longitud en el cliente, este caso se pone rojo. Es la protección contra la segunda fuente de verdad.
+- **2026-09-22** — Verde: 7 casos nuevos, `npm test` en 228/228, typecheck limpio. Los 25 casos originales de `login-estado` siguen pasando tras el renombre, que es lo que sostiene REG1–REG5.
 
 ### T9 — Conectar el envío del panel con Supabase
 

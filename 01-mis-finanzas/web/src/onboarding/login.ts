@@ -19,7 +19,7 @@ import {
   alternarRecordarme,
   escribir,
   LOGIN_INICIAL,
-  puedeEntrar,
+  puedeEnviar,
   type EstadoLogin,
 } from "./login-estado";
 
@@ -103,7 +103,7 @@ export function montarLogin(raiz: HTMLElement, navegar: (p: Pantalla) => void): 
       clave.toggleEtiqueta.textContent = estado.claveVisible ? "Hide" : "Show";
     }
     recordarme.raiz.setAttribute("aria-checked", String(estado.recordarme));
-    entrar.disabled = !puedeEntrar(estado);
+    entrar.disabled = !puedeEnviar(estado);
   }
 
   pintar();
