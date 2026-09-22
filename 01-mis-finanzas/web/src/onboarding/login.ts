@@ -2,6 +2,7 @@
 // Arma el DOM una sola vez y despues solo parcha las hojas que dependen del
 // estado: nunca reemplaza el campo mientras se escribe.
 
+import { autenticar } from "../auth/autenticar";
 import {
   botonGoogle,
   botonPrimario,
@@ -9,6 +10,7 @@ import {
   casilla,
   elemento,
   enlace,
+  mensajeFormulario,
   type CampoTexto,
 } from "../ds/componentes";
 import { icono } from "../ds/iconos";
@@ -18,9 +20,11 @@ import {
   alternarClaveVisible,
   alternarModo,
   alternarRecordarme,
+  enviar,
   escribir,
   LOGIN_INICIAL,
   puedeEnviar,
+  responder,
   textosDe,
   type EstadoLogin,
 } from "./login-estado";
@@ -70,10 +74,15 @@ export function montarLogin(raiz: HTMLElement, navegar: (p: Pantalla) => void): 
   const titulo = pantalla.querySelector<HTMLElement>(".formulario__titulo");
   const subtitulo = pantalla.querySelector<HTMLElement>(".formulario__subtitulo");
 
+  const alerta = mensajeFormulario();
+
   const formulario = pantalla.querySelector(".formulario");
   formulario?.append(
     campos,
     opciones,
+    // Entre las opciones y el boton: se lee justo antes de volver a intentar,
+    // que es el momento en que el motivo del rechazo sirve para algo.
+    alerta.raiz,
     entrar,
     elemento("div", "divisor", "or"),
     botonGoogle("Continue with Google"),
@@ -99,7 +108,27 @@ export function montarLogin(raiz: HTMLElement, navegar: (p: Pantalla) => void): 
   // alternarModo se encarga de ignorarlo si hay un intento en vuelo (R5.2), asi
   // que aca no hay ninguna condicion que mantener sincronizada.
   crear.addEventListener("click", () => cambiar(alternarModo(estado)));
-  entrar.addEventListener("click", () => navegar("perfil"));
+  entrar.addEventListener("click", () => void intentar());
+
+  // El unico camino por el que se sale del acceso. Antes navegaba sin preguntar
+  // nada; ahora navega solo si el servidor acepta.
+  async function intentar(): Promise<void> {
+    // Segunda barrera contra el doble clic, ademas del boton deshabilitado: un
+    // clic disparado por teclado o por un test puede llegar igual, y R5.4 pide
+    // exactamente una peticion por activacion.
+    if (!puedeEnviar(estado)) return;
+
+    cambiar(enviar(estado));
+    const resultado = await autenticar(estado.modo, {
+      correo: estado.correo,
+      clave: estado.clave,
+    });
+    // `estado` se relee despues del await a proposito: si el usuario siguio
+    // tecleando mientras la peticion viajaba, lo que vale es lo ultimo escrito.
+    cambiar(responder(estado, resultado));
+
+    if (resultado.ok) navegar("perfil");
+  }
 
   // Una sola funcion escribe TODO lo que se deriva del estado. Si algo
   // depende del estado y no esta aca, no se actualiza nunca.
@@ -122,6 +151,13 @@ export function montarLogin(raiz: HTMLElement, navegar: (p: Pantalla) => void): 
       clave.toggleEtiqueta.textContent = estado.claveVisible ? "Hide" : "Show";
     }
     recordarme.raiz.setAttribute("aria-checked", String(estado.recordarme));
+
+    // El nodo existe siempre; lo que cambia es si tiene texto (D9). Oculto sin
+    // texto, para que getByRole("alert") no lo encuentre y "no hay mensaje" se
+    // pueda afirmar directamente.
+    alerta.raiz.textContent = estado.mensaje ?? "";
+    alerta.raiz.hidden = estado.mensaje === undefined;
+
     entrar.disabled = !puedeEnviar(estado);
   }
 

@@ -80,6 +80,21 @@ export function enlace(texto: string): HTMLButtonElement {
   return boton;
 }
 
+// El unico lugar donde se muestra un fallo del servidor. No es un error de
+// campo: cuando las credenciales no coinciden, nadie sabe cual de los dos esta
+// mal, asi que culpar a uno seria mentir.
+//
+// role="alert" hace que un lector de pantalla lo anuncie al aparecer el texto.
+// El nodo se crea una vez y se oculta con `hidden` en vez de entrar y salir del
+// arbol (D9): asi el panel no salta de alto, y getByRole("alert") no lo
+// encuentra mientras esta vacio, que es como el E2E afirma "no hay mensaje".
+export function mensajeFormulario(): { raiz: HTMLElement } {
+  const raiz = elemento("div", "mensaje-formulario");
+  raiz.setAttribute("role", "alert");
+  raiz.hidden = true;
+  return { raiz };
+}
+
 export function botonPrimario(etiqueta: string): HTMLButtonElement {
   const boton = elemento("button", "boton boton--primario", etiqueta);
   boton.type = "button";
