@@ -79,6 +79,12 @@ export function textosDe(modo: ModoLogin): TextosLogin {
 // registrarse no tiene por que volver a escribir su correo. Lo que si se va
 // son los mensajes, porque hablaban del otro modo.
 export function alternarModo(estado: EstadoLogin): EstadoLogin {
+  // Con un intento en vuelo el cambio se ignora y el estado vuelve intacto. Si
+  // no, la respuesta de un registro puede aterrizar en un panel que ya dice
+  // "Sign in" y explicar el fallo de algo que el usuario ya no cree estar
+  // haciendo. Bloquear el volteo cuesta una linea; correlacionar respuestas
+  // con el modo que estaba vigente al enviarlas, bastante mas.
+  if (estado.enviando) return estado;
   return {
     ...estado,
     modo: estado.modo === "entrar" ? "registrar" : "entrar",
@@ -185,6 +191,15 @@ export function alternarRecordarme(estado: EstadoLogin): EstadoLogin {
 
 // El boton depende de la validez, no de si ya se mostro un error: con los
 // campos vacios arranca deshabilitado y sin ningun mensaje en pantalla.
-export function puedeEntrar(estado: EstadoLogin): boolean {
-  return correoValido(estado.correo) && claveValida(estado.clave);
+//
+// `claveValida` solo pide que la clave EXISTA. La longitud minima la fija
+// config.toml y la juzga el servidor (BR2): comprobarla tambien aca crearia una
+// segunda fuente de verdad que se separaria el dia que alguien mueva
+// minimum_password_length. Por eso una clave de tres caracteres habilita el
+// boton y el rechazo llega como mensaje de formulario.
+//
+// El `!enviando` es la guarda de re-entrada (BR3): mientras haya un intento en
+// vuelo no se puede lanzar otro, ni por doble clic ni por un servidor lento.
+export function puedeEnviar(estado: EstadoLogin): boolean {
+  return !estado.enviando && correoValido(estado.correo) && claveValida(estado.clave);
 }

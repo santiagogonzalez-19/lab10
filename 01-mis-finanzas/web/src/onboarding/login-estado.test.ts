@@ -8,7 +8,7 @@ import {
   enviar,
   escribir,
   LOGIN_INICIAL,
-  puedeEntrar,
+  puedeEnviar,
   responder,
   textosDe,
 } from "./login-estado";
@@ -95,30 +95,30 @@ describe("escribir", () => {
   });
 });
 
-describe("puedeEntrar", () => {
+describe("puedeEnviar", () => {
   it("arranca deshabilitado y sin errores visibles", () => {
-    expect(puedeEntrar(LOGIN_INICIAL)).toBe(false);
+    expect(puedeEnviar(LOGIN_INICIAL)).toBe(false);
     expect(LOGIN_INICIAL.errores).toEqual({});
   });
 
   it("no alcanza con el correo si la clave esta vacia", () => {
     const estado = escribir(LOGIN_INICIAL, "correo", "sofia@correo.com");
-    expect(puedeEntrar(estado)).toBe(false);
+    expect(puedeEnviar(estado)).toBe(false);
   });
 
   it("no alcanza con la clave si el correo es invalido", () => {
     const estado = escribir(escribir(LOGIN_INICIAL, "correo", "sofia"), "clave", "secreta");
-    expect(puedeEntrar(estado)).toBe(false);
+    expect(puedeEnviar(estado)).toBe(false);
   });
 
   it("habilita con correo valido y clave con contenido", () => {
     const estado = escribir(escribir(LOGIN_INICIAL, "correo", "sofia@correo.com"), "clave", "secreta");
-    expect(puedeEntrar(estado)).toBe(true);
+    expect(puedeEnviar(estado)).toBe(true);
   });
 
   it("un espacio es un caracter de contrasena valido", () => {
     const estado = escribir(escribir(LOGIN_INICIAL, "correo", "sofia@correo.com"), "clave", " ");
-    expect(puedeEntrar(estado)).toBe(true);
+    expect(puedeEnviar(estado)).toBe(true);
   });
 });
 
@@ -280,5 +280,61 @@ describe("ciclo del envio", () => {
     const conError = abandonar(escribir(LOGIN_INICIAL, "correo", "no-es-correo"), "correo");
     const despues = responder(enviar(conError), { ok: true });
     expect(despues.errores).toEqual(conError.errores);
+  });
+});
+
+describe("guarda de re-entrada", () => {
+  const listo = escribir(
+    escribir(LOGIN_INICIAL, "correo", "sofia@correo.com"),
+    "clave",
+    "supersecret123",
+  );
+
+  it("CP23 · con un intento en vuelo, cambiar de modo no hace nada", () => {
+    // Sin esto, la respuesta de un registro puede aterrizar en un panel que ya
+    // dice "Sign in", y el mensaje hablaria de una operacion que el usuario ya
+    // no cree estar haciendo.
+    const enVuelo = enviar(listo);
+    expect(alternarModo(enVuelo)).toEqual(enVuelo);
+  });
+
+  it("CP23 · terminado el intento, el modo vuelve a poder cambiarse", () => {
+    const terminado = responder(enviar(listo), { ok: false, codigo: "sin-red" });
+    expect(alternarModo(terminado).modo).toBe("registrar");
+  });
+
+  it("CP29 · con un intento en vuelo no se puede enviar, aunque los campos sirvan", () => {
+    expect(puedeEnviar(listo)).toBe(true);
+    expect(puedeEnviar(enviar(listo))).toBe(false);
+  });
+
+  it("CP29 · al terminar el intento el boton vuelve a habilitarse (R5.3)", () => {
+    expect(puedeEnviar(responder(enviar(listo), { ok: false, codigo: "sin-red" }))).toBe(
+      true,
+    );
+  });
+
+  it("CP30 · una clave de tres caracteres habilita el envio (BR2)", () => {
+    // Se lee raro a proposito. La longitud minima la fija config.toml y la
+    // juzga el servidor: duplicarla aca crearia una segunda fuente de verdad
+    // que se separaria el dia que alguien cambie minimum_password_length.
+    const corta = escribir(escribir(LOGIN_INICIAL, "correo", "sofia@correo.com"), "clave", "abc");
+    expect(puedeEnviar(corta)).toBe(true);
+  });
+
+  it("CP32 · abandonar y escribir siguen funcionando como antes (REG1, REG2)", () => {
+    const invalido = escribir(LOGIN_INICIAL, "correo", "no-es-correo");
+    const conError = abandonar(invalido, "correo");
+    expect(conError.errores.correo).toBe("That email doesn't look valid.");
+    expect(escribir(conError, "correo", "so").errores.correo).toBeUndefined();
+  });
+
+  it("CP33 · los toggles no tocan modo, envio ni mensaje (REG4, REG5)", () => {
+    const base = responder(enviar(listo), { ok: false, codigo: "desconocido" });
+    for (const siguiente of [alternarClaveVisible(base), alternarRecordarme(base)]) {
+      expect(siguiente.modo).toBe(base.modo);
+      expect(siguiente.enviando).toBe(base.enviando);
+      expect(siguiente.mensaje).toBe(base.mensaje);
+    }
   });
 });
