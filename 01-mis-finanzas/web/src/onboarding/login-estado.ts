@@ -2,7 +2,12 @@
 // mensaje corresponde y cuando se habilita el boton. Sin DOM: es lo que se
 // prueba, y por eso vive separado de login.ts, que solo pinta.
 
-import type { ModoAuth } from "../auth/autenticar";
+import type { ModoAuth, ResultadoAuth } from "../auth/autenticar";
+// Alias obligado: este archivo ya tiene un `mensajeDe(estado, campo)` privado
+// que decide el error DE UN CAMPO. Son dos preguntas distintas —la forma de lo
+// escrito contra el veredicto del servidor— y confundirlas es exactamente el
+// error que BR4 prohibe, asi que tampoco comparten nombre.
+import { mensajeDe as mensajeDelCodigo } from "../auth/errores";
 
 export type CampoLogin = "correo" | "clave";
 
@@ -82,6 +87,27 @@ export function alternarModo(estado: EstadoLogin): EstadoLogin {
   };
 }
 
+// Arranca el intento. Borra el mensaje anterior en el mismo paso: dejarlo
+// visible mientras se reintenta haria leer el veredicto del intento pasado
+// como si fuera el de este.
+export function enviar(estado: EstadoLogin): EstadoLogin {
+  return { ...estado, enviando: true, mensaje: undefined };
+}
+
+// Cierra el intento. No guarda NADA del exito porque no hay nada que guardar:
+// ResultadoAuth.ok no transporta la sesion (design.md D3), y esa es la forma
+// en que BR1 llega hasta aca sin que nadie tenga que acordarse de descartarla.
+//
+// Tampoco toca `errores` en ninguna de las dos ramas: el servidor no sabe cual
+// de los dos campos esta mal, asi que no puede culpar a ninguno (BR4, R4.6).
+export function responder(estado: EstadoLogin, resultado: ResultadoAuth): EstadoLogin {
+  return {
+    ...estado,
+    enviando: false,
+    mensaje: resultado.ok ? undefined : mensajeDelCodigo(resultado.codigo),
+  };
+}
+
 const MENSAJES = {
   correoVacio: "Enter your email.",
   correoInvalido: "That email doesn't look valid.",
@@ -125,6 +151,9 @@ export function escribir(
   return {
     ...estado,
     [campo]: valor,
+    // Tambien se va el mensaje del servidor: nadie deberia seguir leyendo "esas
+    // credenciales no coinciden" mientras corrige justamente eso (R4.5).
+    mensaje: undefined,
     errores: sinError(estado.errores, campo),
   };
 }
