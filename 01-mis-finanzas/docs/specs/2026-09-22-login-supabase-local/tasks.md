@@ -166,7 +166,7 @@
 
 ### T5 — Envío y mensaje de servidor en el estado del panel
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -180,12 +180,19 @@
 
 *Hecho cuando:*
 
-- [ ] CP25 falla primero porque la función `enviar` no existe — T4 ya agrega `enviando` y `mensaje` a `EstadoLogin` como datos inertes, sin ninguna función que los toque —, y después `enviar` marca `enviando === true` y deja `mensaje === undefined`
-- [ ] CP26 y CP27 verifican que `responder` apaga `enviando` en los dos desenlaces, y fija `mensaje` con `mensajeDe(codigo)` en el fallo (R4.1) o lo deja `undefined` en el éxito (R1.1, R2.1) (nota de implementación: `mensajeDe` de `errores.ts` colisiona de nombre con el `mensajeDe(estado, campo)` privado que ya existe en este archivo — importar con alias)
-- [ ] CP28 confirma que `escribir` retira el mensaje de formulario mientras se escribe, y CP31/CP34 confirman que ningún desenlace de `responder` toca `errores`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP25 falla primero porque la función `enviar` no existe — T4 ya agrega `enviando` y `mensaje` a `EstadoLogin` como datos inertes, sin ninguna función que los toque —, y después `enviar` marca `enviando === true` y deja `mensaje === undefined`
+- [x] CP26 y CP27 verifican que `responder` apaga `enviando` en los dos desenlaces, y fija `mensaje` con `mensajeDe(codigo)` en el fallo (R4.1) o lo deja `undefined` en el éxito (R1.1, R2.1) (nota de implementación: `mensajeDe` de `errores.ts` colisiona de nombre con el `mensajeDe(estado, campo)` privado que ya existe en este archivo — importar con alias)
+- [x] CP28 confirma que `escribir` retira el mensaje de formulario mientras se escribe, y CP31/CP34 confirman que ningún desenlace de `responder` toca `errores`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
+
+- **2026-09-22** — Leído §6: **T3-D1** importa acá porque `responder` recibe el `ResultadoAuth` que produce `autenticar`, y **T2-D1** garantiza que el `codigo` que llega siempre está en el mapa de `mensajeDe` — por eso `responder` no necesita ningún caso por defecto.
+- **2026-09-22** — La colisión que el plan anticipó era real: `errores.ts` exporta `mensajeDe(codigo)` y este archivo ya tenía un `mensajeDe(estado, campo)` privado. Importado como `mensajeDelCodigo`. Vale la pena que sigan con nombres distintos y no unificarlos: responden preguntas distintas —la forma de lo escrito contra el veredicto del servidor— y mezclarlas es justamente lo que BR4 prohíbe.
+- **2026-09-22** — Honestidad de proceso: los casos se escribieron antes que las funciones, pero el rojo de T5 **no se corrió por separado** antes de implementar, como sí se hizo en T2, T3 y T4. El archivo no habría compilado —importa `enviar` y `responder`, que no existían—, así que el rojo era seguro, pero no fue observado. Queda anotado en vez de dar por visto algo que no se miró.
+- **2026-09-22** — `responder` no tiene rama que escriba en `errores`, y eso es deliberado: R4.6 y BR4 no se cumplen "teniendo cuidado", se cumplen porque no existe el código que lo haría. CP31 y CP34 lo fijan comparando `errores` contra su valor previo en los dos desenlaces.
+- **2026-09-22** — Se agregó un caso que el plan no pedía: BR5 recorrida sobre los seis códigos, comprobando que ninguno deja el mensaje vacío. Cuesta cuatro líneas y cierra el invariante entero en vez de dos ejemplos.
+- **2026-09-22** — Verde: 8 casos nuevos, `npm test` en 221/221 sobre 16 archivos, typecheck limpio.
 
 ### T6 — Pintar el modo del panel en el DOM
 

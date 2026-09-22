@@ -5,9 +5,11 @@ import {
   alternarModo,
   alternarRecordarme,
   correoValido,
+  enviar,
   escribir,
   LOGIN_INICIAL,
   puedeEntrar,
+  responder,
   textosDe,
 } from "./login-estado";
 
@@ -195,5 +197,88 @@ describe("modo del panel", () => {
       pieTexto: "Already have an account?",
       pieEnlace: "Sign in",
     });
+  });
+});
+
+describe("ciclo del envio", () => {
+  const conCampos = escribir(
+    escribir(LOGIN_INICIAL, "correo", "sofia@correo.com"),
+    "clave",
+    "supersecret123",
+  );
+
+  it("CP25 · enviar marca el envio y borra el mensaje anterior", () => {
+    const estado = enviar({ ...conCampos, mensaje: "un fallo anterior" });
+    expect(estado.enviando).toBe(true);
+    expect(estado.mensaje).toBeUndefined();
+  });
+
+  it("CP26 · responder con fallo apaga el envio y muestra el mensaje del codigo", () => {
+    const estado = responder(enviar(conCampos), {
+      ok: false,
+      codigo: "invalid_credentials",
+    });
+    expect(estado.enviando).toBe(false);
+    expect(estado.mensaje).toBe("That email and password don't match an account.");
+  });
+
+  it("CP26 · cada codigo de fallo trae su propio mensaje", () => {
+    const paraRegistro = responder(enviar(conCampos), {
+      ok: false,
+      codigo: "user_already_exists",
+    });
+    expect(paraRegistro.mensaje).toBe(
+      "That email already has an account. Sign in instead.",
+    );
+  });
+
+  it("CP26 · ningun fallo deja la pantalla sin mensaje (BR5)", () => {
+    const codigos = [
+      "invalid_credentials",
+      "user_already_exists",
+      "weak_password",
+      "sin-red",
+      "sin-configurar",
+      "desconocido",
+    ] as const;
+    for (const codigo of codigos) {
+      const estado = responder(enviar(conCampos), { ok: false, codigo });
+      expect(estado.mensaje).toBeDefined();
+      expect(estado.mensaje).not.toBe("");
+    }
+  });
+
+  it("CP27 · responder con exito apaga el envio y no deja mensaje", () => {
+    const estado = responder(enviar(conCampos), { ok: true });
+    expect(estado.enviando).toBe(false);
+    expect(estado.mensaje).toBeUndefined();
+  });
+
+  it("CP28 · escribir retira el mensaje del servidor", () => {
+    // Teclear descarta un error viejo: nadie deberia seguir leyendo
+    // "esas credenciales no coinciden" mientras corrige justamente eso.
+    const conMensaje = responder(enviar(conCampos), {
+      ok: false,
+      codigo: "invalid_credentials",
+    });
+    expect(escribir(conMensaje, "clave", "otra-clave").mensaje).toBeUndefined();
+    expect(escribir(conMensaje, "correo", "otro@correo.com").mensaje).toBeUndefined();
+  });
+
+  it("CP31 · un fallo del servidor no escribe en los errores de campo (BR4)", () => {
+    // El nucleo de R4.6: el servidor no sabe cual de los dos campos esta mal,
+    // asi que no puede culpar a ninguno.
+    const conError = abandonar(escribir(LOGIN_INICIAL, "correo", "no-es-correo"), "correo");
+    const despues = responder(enviar(conError), {
+      ok: false,
+      codigo: "invalid_credentials",
+    });
+    expect(despues.errores).toEqual(conError.errores);
+  });
+
+  it("CP34 · el exito tampoco toca los errores de campo", () => {
+    const conError = abandonar(escribir(LOGIN_INICIAL, "correo", "no-es-correo"), "correo");
+    const despues = responder(enviar(conError), { ok: true });
+    expect(despues.errores).toEqual(conError.errores);
   });
 });
