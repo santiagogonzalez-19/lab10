@@ -77,7 +77,7 @@
 
 ### T2 — Traducir los fallos de GoTrue a un código y a su mensaje
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -91,11 +91,17 @@
 
 *Hecho cuando:*
 
-- [ ] CP1–CP9 fallan primero porque `codigoDeRespuesta` no existe, y después devuelven el código esperado para las tres formas de cuerpo y para el cuerpo ilegible
-- [ ] CP10 fija los seis mensajes exactos de `design.md` §6, carácter a carácter
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP1–CP9 fallan primero porque `codigoDeRespuesta` no existe, y después devuelven el código esperado para las tres formas de cuerpo y para el cuerpo ilegible
+- [x] CP10 fija los seis mensajes exactos de `design.md` §6, carácter a carácter
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
+
+- **2026-09-22** — Rojo: `errores.test.ts` no compila porque `./errores` no existe. 21 casos escritos antes que el módulo.
+- **2026-09-22** — **El hallazgo de esta tarea, y el motivo de haber sondeado el servidor en T1.** En GoTrue v2.196.0 el cuerpo de error es `{"code": 422, "error_code": "user_already_exists", "msg": "User already registered"}`: **`code` trae el número del status HTTP, no el slug.** `design.md` §6 y D6 mandan leer `code` primero y después `error_code`. Implementado literal —`cuerpo.code ?? cuerpo.error_code`— `code` sería `422`, que es un valor presente y no nulo, así que ganaría siempre y **todos los fallos caerían en `desconocido`**: el panel diría "Something went wrong. Try again." para credenciales incorrectas, correo duplicado y clave corta por igual. Es exactamente el fallo silencioso que D6 pretendía evitar, introducido por el propio orden que D6 fija. Corregido: `code` solo cuenta cuando es un `string`. Registrado como desvío **DV2** en §7; los tres casos con la forma real del servidor (CP2, CP4, CP6) lo dejan clavado, así que una regresión rompe un test en vez de degradar en silencio.
+- **2026-09-22** — Decisión **T2-D1**: un slug explícito que no está en el mapa devuelve `desconocido` **sin** consultar la heurística de texto. Alternativa: caer al texto igual, por si el slug es nuevo pero la prosa reconocible. Criterio: si el servidor nombró la causa, contradecirlo con una expresión regular es peor que admitir que no la conocemos — y hace impredecible qué gana cuando código y texto discrepan. La heurística queda solo para cuerpos sin ningún código, que es para lo que D6 la pedía.
+- **2026-09-22** — Descubierto: un correo con formato inválido devuelve `validation_failed`, que ningún criterio cubre y por lo tanto cae en `desconocido`. No se le agrega mensaje propio: `correoValido` ya lo ataja en el cliente antes de que salga la petición, así que el camino es casi inalcanzable. Queda un caso de prueba que lo fija (dentro de CP9) para que la decisión sea visible y no un olvido.
+- **2026-09-22** — Verde: 21 casos nuevos, `npm test` en 197/197 y typecheck limpio. Sin dependencias nuevas.
 
 ### T3 — Emitir el intento y devolver un resultado que no transporta la sesión
 
@@ -308,12 +314,14 @@ REG6 está cubierto por `web/src/rutas.test.ts` y por la prueba de ruteo del E2E
 | # | Tarea | Decisión | Fecha |
 |---|---|---|---|
 | T1-D1 | T1 | Se usa `ANON_KEY` (el JWT) y no `PUBLISHABLE_KEY` para el header `apikey`, aunque el CLI imprima las dos | 2026-09-22 |
+| T2-D1 | T2 | Un slug explícito que no está en el mapa devuelve `desconocido` sin consultar la heurística de texto | 2026-09-22 |
 
 ## 7. Desvíos del diseño
 
 | # | Tarea | Qué difiere de design.md | Resolución |
 |---|---|---|---|
 | DV1 | T1 | §2 lista `.gitignore` como archivo **Nuevo**; ya existe en la raíz del repo git, un nivel arriba de `01-mis-finanzas/` | Desvío local, diseño sigue válido: se agregaron las reglas al archivo existente. El componente "Configuración local" pasa de `Nuevo` a `Ampliado` y nada más cambia |
+| DV2 | T2 | §6 y D6 mandan leer `code` antes que `error_code`; en GoTrue v2.196.0 `code` es el número del status, así que ese orden manda **todos** los fallos a `desconocido` | Desvío local, diseño sigue válido: la intención de D6 —tolerar varias formas de cuerpo— es correcta y se cumple; solo se corrige el criterio de lectura, `code` cuenta únicamente si es `string`. `design.md` no se reabre porque ningún criterio ni caso de prueba cambia: CP2, CP4 y CP6 pasan a usar la forma real del servidor |
 
 ## 8. Tareas descubiertas durante la implementación
 
