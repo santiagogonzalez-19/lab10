@@ -226,7 +226,7 @@
 
 ### T7 — Repuntar el recorrido E2E existente y el arranque de la suite
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -240,11 +240,18 @@
 
 *Hecho cuando:*
 
-- [ ] Tras T9, `ingresar()` deja de navegar: postea `CREDENCIALES` contra Supabase local, que no tiene esa cuenta, y `autenticar` devuelve `invalid_credentials`, así que 9 de los 11 recorridos de `e2e/onboarding.spec.ts` quedan rojos — los que llaman a `ingresar()` desde las líneas 54, 101, 157 y 183 (8 tests dentro de los `describe` "Perfil", "Conoceme", "Plan" y "Ruteo"), más la prueba de la línea 34 que hace el clic en línea y afirma la misma navegación. Ese es el fallo que T7 cierra (REG7): `ingresar()` pasa a `page.goto("/#/perfil")` (D8), y la prueba de la línea 34 conserva la validación de campos pero suelta la aserción de navegación
-- [ ] `playwright.config.ts` agrega el arranque de Supabase (D7): hoy `webServer` es un único objeto (`command: "npm run dev"`); pasa a un arreglo de dos entradas — la existente más `command: "supabase start"` con la `url` del health de auth y `reuseExistingServer` — y la suite falla diciendo qué falta cuando Docker está apagado
-- [ ] `npm run test:e2e` en verde de punta a punta
+- [x] Tras T9, `ingresar()` deja de navegar: postea `CREDENCIALES` contra Supabase local, que no tiene esa cuenta, y `autenticar` devuelve `invalid_credentials`, así que 9 de los 11 recorridos de `e2e/onboarding.spec.ts` quedan rojos — los que llaman a `ingresar()` desde las líneas 54, 101, 157 y 183 (8 tests dentro de los `describe` "Perfil", "Conoceme", "Plan" y "Ruteo"), más la prueba de la línea 34 que hace el clic en línea y afirma la misma navegación. Ese es el fallo que T7 cierra (REG7): `ingresar()` pasa a `page.goto("/#/perfil")` (D8), y la prueba de la línea 34 conserva la validación de campos pero suelta la aserción de navegación
+- [x] `playwright.config.ts` agrega el arranque de Supabase (D7): hoy `webServer` es un único objeto (`command: "npm run dev"`); pasa a un arreglo de dos entradas — la existente más `command: "supabase start"` con la `url` del health de auth y `reuseExistingServer` — y la suite falla diciendo qué falta cuando Docker está apagado
+- [x] `npm run test:e2e` en verde de punta a punta
 
 **Bitácora**
+
+- **2026-09-22** — Leído §6. La entrada de T9 sobre `page.goto` al mismo fragmento es la que condiciona esta tarea: navegar al mismo hash no recarga, así que un recorrido no puede confiar en que el panel se remonte. `ingresar()` ahora va a `#/perfil`, que es un hash distinto del que deja el test anterior, así que no toca el problema — pero queda dicho para quien escriba los tres casos del loop.
+- **2026-09-22** — Rojo confirmado corriendo la suite antes de tocarla: **9 fallando, 2 pasando**, exactamente el conteo que el plan predijo. Los nueve son los que atravesaban el login falso.
+- **2026-09-22** — La prueba de la línea 34 se partió en dos en vez de recortarse. Su primera mitad —corregir el correo limpia el error y habilita el botón— sigue siendo suya: es validación de forma, del cliente, sin servidor. La segunda mitad —que eso abra la aplicación— dejó de ser cierta y se fue al loop, donde hay credenciales de verdad. Se renombró a `corregir el email limpia su error y habilita el envio` para que el nombre no siga prometiendo una navegación que ya no comprueba.
+- **2026-09-22** — Se agregó un caso que el plan no pedía: el acceso no muestra ningún mensaje de servidor al abrirse (`getByRole("alert")` con `toHaveCount(0)`). Cuesta tres líneas y es la contraparte de D9 — si alguien quita el `hidden`, el nodo vacío pasa a ser encontrable y este caso se pone rojo antes de que un E2E del loop empiece a afirmar mensajes fantasma.
+- **2026-09-22** — `supabase start` **no se queda en primer plano**: termina cuando los contenedores están listos. Por eso la entrada de `webServer` se apoya en la `url` del health y no en el proceso, y lleva `reuseExistingServer: true` sin condicionar a CI — a diferencia del servidor de Vite, acá reusar siempre es lo correcto: un Supabase ya levantado es el mismo servicio, no una instancia vieja. `timeout` en 180 s porque la primera corrida baja imágenes.
+- **2026-09-22** — Verde de punta a punta: **12 E2E pasando** (11 repuntados más el caso nuevo), `npm test` en 228/228, typecheck limpio y `cobertura.py` cerrando en 9 tareas / 39 criterios / 34 casos.
 
 ### T8 — Guarda de re-entrada: bloquear un segundo intento mientras el primero está en vuelo
 

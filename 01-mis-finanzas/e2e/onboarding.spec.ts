@@ -6,13 +6,19 @@ import { expect, test, type Page } from "@playwright/test";
 
 const CREDENCIALES = { email: "santiago@example.com", clave: "supersecret123" };
 
-// Llena el acceso con datos validos y entra. Varias pantallas la necesitan
-// como paso previo, y el boton solo se habilita con el formulario completo.
+// Entra al perfil sin pasar por el acceso. Antes rellenaba el formulario y
+// hacia clic en "Sign in", lo cual funcionaba solo porque el login era una
+// maqueta que navegaba con cualquier dato; desde que consulta a Supabase, esa
+// cuenta no existe y el recorrido entero se caia.
+//
+// Se navega directo en vez de registrar un usuario real en cada beforeEach:
+// estos ocho tests son sobre perfil, movimientos y plan, y hacerlos depender
+// de la red los volveria lentos y fragiles por un motivo ajeno a lo que
+// prueban. REG7 existe justamente para que esto sea legitimo: la feature no
+// agrega guardia de rutas, asi que llegar directo a #/perfil tiene que seguir
+// funcionando. La autenticacion de verdad la prueban los tres casos del loop.
 async function ingresar(page: Page): Promise<void> {
-  await page.goto("/#/login");
-  await page.getByRole("textbox", { name: "Email" }).fill(CREDENCIALES.email);
-  await page.getByRole("textbox", { name: "Password" }).fill(CREDENCIALES.clave);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.goto("/#/perfil");
   await expect(page).toHaveURL(/#\/perfil$/);
 }
 
@@ -31,7 +37,13 @@ test.describe("Acceso", () => {
     await expect(ingresarBtn).toBeDisabled();
   });
 
-  test("con datos validos se limpia el error y se pasa al perfil", async ({ page }) => {
+  // Este test era "se limpia el error y se pasa al perfil". Lo segundo ya no
+  // le corresponde: que un correo bien formado abra la aplicacion era cierto
+  // cuando el login era una maqueta, y ahora depende de que exista la cuenta.
+  // Queda con la mitad que sigue siendo suya —la validacion de forma, que es
+  // del cliente y no consulta a nadie— y la navegacion se prueba en el loop,
+  // contra credenciales de verdad.
+  test("corregir el email limpia su error y habilita el envio", async ({ page }) => {
     await page.goto("/#/login");
     await page.getByRole("textbox", { name: "Email" }).fill("not-an-email");
     await page.getByRole("textbox", { name: "Password" }).fill(CREDENCIALES.clave);
@@ -42,10 +54,13 @@ test.describe("Acceso", () => {
 
     await expect(page.getByText("That email doesn't look valid.")).toBeHidden();
     await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
+  });
 
-    await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page).toHaveURL(/#\/perfil$/);
-    await expect(page.getByRole("heading", { name: "Tell us about your finances" })).toBeVisible();
+  // El acceso arranca sin ningun mensaje de servidor: el nodo de alerta existe
+  // pero esta oculto, asi que getByRole("alert") no lo encuentra (D9).
+  test("el acceso no muestra ningun mensaje de servidor al abrirse", async ({ page }) => {
+    await page.goto("/#/login");
+    await expect(page.getByRole("alert")).toHaveCount(0);
   });
 });
 
