@@ -278,7 +278,7 @@
 
 ### T9 — Conectar el envío del panel con Supabase
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -292,12 +292,21 @@
 
 *Hecho cuando:*
 
-- [ ] Hoy el clic en el botón de envío navega directo a `#/perfil` con cualquier correo y clave, porque el manejador llama a `navegar("perfil")` sin consultar el servidor — ese es el rojo a cerrar: después, el manejador comprueba `puedeEnviar(estado)`, llama a `enviar` para marcar el intento en vuelo, invoca `autenticar(estado.modo, { correo: estado.correo.trim(), clave: estado.clave })` y llama a `responder` con el resultado, navegando a `#/perfil` solo si es `ok`
-- [ ] El nodo de alerta (`mensajeFormulario`) se crea una sola vez entre `opciones` y el botón de envío, vive siempre en el DOM, y `pintar()` le escribe `estado.mensaje` alternando `hidden` según haya texto o no
-- [ ] Con Supabase levantado, se prueban a mano los tres flujos del loop: registro con correo nuevo, credenciales incorrectas y registro sobre un correo existente
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] Hoy el clic en el botón de envío navega directo a `#/perfil` con cualquier correo y clave, porque el manejador llama a `navegar("perfil")` sin consultar el servidor — ese es el rojo a cerrar: después, el manejador comprueba `puedeEnviar(estado)`, llama a `enviar` para marcar el intento en vuelo, invoca `autenticar(estado.modo, { correo: estado.correo.trim(), clave: estado.clave })` y llama a `responder` con el resultado, navegando a `#/perfil` solo si es `ok`
+- [x] El nodo de alerta (`mensajeFormulario`) se crea una sola vez entre `opciones` y el botón de envío, vive siempre en el DOM, y `pintar()` le escribe `estado.mensaje` alternando `hidden` según haya texto o no
+- [x] Con Supabase levantado, se prueban a mano los tres flujos del loop: registro con correo nuevo, credenciales incorrectas y registro sobre un correo existente
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
+
+- **2026-09-22** — Leído §6: **T3-D1** es la que importa — el manejador llama a `autenticar` **sin** pasar `dependencias`, así que la configuración sale del entorno real. Si algún día alguien le pasa `config` a esta llamada, está cambiando de qué servidor habla la aplicación.
+- **2026-09-22** — Los estilos fueron a `componentes.css` y no a `pantallas.css`, como el plan corrigió: `pantallas.css` es de "Know Me" y "Plan", y todo el panel de acceso —`.formulario`, `.opciones`, `.pie`, `.campo__error`— ya vivía en `componentes.css`. Haberlo puesto donde decía el diseño original habría dejado el mensaje sin estilo.
+- **2026-09-22** — Desvío menor del plan: el plan escribe `autenticar(estado.modo, { correo: estado.correo.trim(), … })`, pero el recorte ya vive dentro de `autenticar` y CP13 lo fija ahí. Se llama sin `.trim()` para no tener la misma regla en dos lugares — el comportamiento observable es idéntico. No se registra como DV porque no se aparta de `design.md`, solo de una línea de ejemplo del plan.
+- **2026-09-22** — El manejador comprueba `puedeEnviar` **además** de que el botón esté deshabilitado. No es redundante: un clic disparado por teclado o por un test llega igual al manejador, y R5.4 pide exactamente una petición por activación.
+- **2026-09-22** — `estado` se relee después del `await`, no se captura antes: si el usuario siguió tecleando mientras la petición viajaba, `responder` tiene que aplicarse sobre lo último escrito y no sobre una foto vieja.
+- **2026-09-22** — Verificación contra Supabase vivo, los cinco flujos (el MCP de Playwright no conectó; mismo motor por script). Registro nuevo → `#/perfil`. Credenciales incorrectas → queda en `#/login` con `That email and password don't match an account.` y **cero errores bajo los campos**, que es R4.6 y BR4 confirmados en el navegador y no solo en el estado. Correo existente → `That email already has an account. Sign in instead.` Teclear → el mensaje desaparece (R4.5). Login correcto → `#/perfil` con **`localStorage`, `sessionStorage` y cookies los tres vacíos**: R1.4 y BR1 comprobados donde de verdad importa.
+- **2026-09-22** — Falsa alarma que vale registrar: la primera corrida del script dio "login correcto → `#/login`" y pareció un bug de la aplicación. No lo era. Navegar con `page.goto` a la misma URL con idéntico fragmento es una navegación *same-document*: no recarga, el panel no se remonta y seguía en modo `registrar` del flujo anterior, así que reintentaba un registro duplicado. El script se arregló con un `reload`. Anotado porque el mismo error espera a quien escriba los E2E de T7: **entre casos hay que forzar la recarga, no confiar en `goto` al mismo hash.**
+- **2026-09-22** — Verde: sin casos unitarios nuevos —el manejador y el nodo de alerta exigen DOM y el proyecto no tiene `jsdom`, como el plan anticipa—, `npm test` en 228/228 y typecheck limpio.
 
 ## 5. Trazabilidad criterio → tarea
 

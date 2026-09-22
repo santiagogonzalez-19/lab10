@@ -185,6 +185,24 @@
   border-color: var(--danger);
 }
 
+/* --- Mensaje de formulario ---
+   El unico fallo sin dueño entre los campos: lo que dice el servidor cuando
+   rechaza el intento. Vive siempre en el DOM y se oculta con [hidden] (D9), de
+   modo que el panel no salte de alto cada vez que aparece o desaparece. */
+#onboarding .mensaje-formulario {
+  padding: 10px 12px;
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--danger);
+}
+
+#onboarding .mensaje-formulario[hidden] {
+  display: none;
+}
+
 /* --- Opciones del acceso --- */
 #onboarding .opciones {
   display: flex;
