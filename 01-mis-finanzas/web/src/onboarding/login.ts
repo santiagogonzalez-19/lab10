@@ -16,10 +16,12 @@ import type { Pantalla } from "../rutas";
 import {
   abandonar,
   alternarClaveVisible,
+  alternarModo,
   alternarRecordarme,
   escribir,
   LOGIN_INICIAL,
   puedeEnviar,
+  textosDe,
   type EstadoLogin,
 } from "./login-estado";
 
@@ -59,8 +61,14 @@ export function montarLogin(raiz: HTMLElement, navegar: (p: Pantalla) => void): 
   opciones.append(recordarme.raiz, enlace("Forgot password?"));
 
   const pie = elemento("div", "pie");
+  const pieTexto = elemento("span", undefined, "New here?");
   const crear = enlace("Create an account");
-  pie.append(elemento("span", undefined, "New here?"), crear);
+  pie.append(pieTexto, crear);
+
+  // El titulo y el subtitulo los arma panelDeFormulario; se buscan una sola vez
+  // aca para que pintar() no consulte el DOM en cada cambio de estado.
+  const titulo = pantalla.querySelector<HTMLElement>(".formulario__titulo");
+  const subtitulo = pantalla.querySelector<HTMLElement>(".formulario__subtitulo");
 
   const formulario = pantalla.querySelector(".formulario");
   formulario?.append(
@@ -87,11 +95,22 @@ export function montarLogin(raiz: HTMLElement, navegar: (p: Pantalla) => void): 
   clave.entrada.addEventListener("blur", () => cambiar(abandonar(estado, "clave")));
   clave.toggle?.addEventListener("click", () => cambiar(alternarClaveVisible(estado)));
   recordarme.raiz.addEventListener("click", () => cambiar(alternarRecordarme(estado)));
+  // El mismo enlace voltea en los dos sentidos: su texto lo decide el modo.
+  // alternarModo se encarga de ignorarlo si hay un intento en vuelo (R5.2), asi
+  // que aca no hay ninguna condicion que mantener sincronizada.
+  crear.addEventListener("click", () => cambiar(alternarModo(estado)));
   entrar.addEventListener("click", () => navegar("perfil"));
 
   // Una sola funcion escribe TODO lo que se deriva del estado. Si algo
   // depende del estado y no esta aca, no se actualiza nunca.
   function pintar(): void {
+    const textos = textosDe(estado.modo);
+    if (titulo !== null) titulo.textContent = textos.titulo;
+    if (subtitulo !== null) subtitulo.textContent = textos.subtitulo;
+    entrar.textContent = textos.boton;
+    pieTexto.textContent = textos.pieTexto;
+    crear.textContent = textos.pieEnlace;
+
     pintarCampo(correo, estado.errores.correo);
     pintarCampo(clave, estado.errores.clave);
     clave.entrada.type = estado.claveVisible ? "text" : "password";
