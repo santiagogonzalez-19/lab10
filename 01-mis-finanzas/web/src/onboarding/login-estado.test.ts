@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   abandonar,
   alternarClaveVisible,
+  alternarModo,
   alternarRecordarme,
   correoValido,
   escribir,
   LOGIN_INICIAL,
   puedeEntrar,
+  textosDe,
 } from "./login-estado";
 
 describe("correoValido", () => {
@@ -135,5 +137,63 @@ describe("alternar", () => {
     expect(estado.recordarme).toBe(!LOGIN_INICIAL.recordarme);
     expect(estado.correo).toBe(LOGIN_INICIAL.correo);
     expect(estado.clave).toBe(LOGIN_INICIAL.clave);
+  });
+});
+
+describe("modo del panel", () => {
+  it("CP18 · el acceso arranca en modo entrar, sin envio y sin mensaje", () => {
+    expect(LOGIN_INICIAL.modo).toBe("entrar");
+    expect(LOGIN_INICIAL.enviando).toBe(false);
+    expect(LOGIN_INICIAL.mensaje).toBeUndefined();
+  });
+
+  it("CP19 · alternar desde entrar deja el panel en registrar", () => {
+    expect(alternarModo(LOGIN_INICIAL).modo).toBe("registrar");
+  });
+
+  it("CP20 · alternar desde registrar vuelve a entrar", () => {
+    expect(alternarModo(alternarModo(LOGIN_INICIAL)).modo).toBe("entrar");
+  });
+
+  it("CP21 · cambiar de modo conserva el correo y la clave escritos", () => {
+    // Es el sentido de que el registro sea un modo y no otra pantalla: quien
+    // fallo al entrar y decide crearse la cuenta no deberia retipear nada.
+    const escrito = escribir(
+      escribir(LOGIN_INICIAL, "correo", "sofia@correo.com"),
+      "clave",
+      "secreta",
+    );
+    const otro = alternarModo(escrito);
+    expect(otro.correo).toBe("sofia@correo.com");
+    expect(otro.clave).toBe("secreta");
+  });
+
+  it("CP22 · cambiar de modo retira los errores de campo y el mensaje", () => {
+    const conError = abandonar(escribir(LOGIN_INICIAL, "correo", "no-es-correo"), "correo");
+    expect(conError.errores.correo).toBeDefined();
+
+    const otro = alternarModo({ ...conError, mensaje: "un fallo viejo del servidor" });
+    expect(otro.errores).toEqual({});
+    expect(otro.mensaje).toBeUndefined();
+  });
+
+  it("CP24 · los textos de entrar son los de design.md §4", () => {
+    expect(textosDe("entrar")).toEqual({
+      titulo: "Welcome back",
+      subtitulo: "Sign in to continue building your Northstar plan.",
+      boton: "Sign in",
+      pieTexto: "New here?",
+      pieEnlace: "Create an account",
+    });
+  });
+
+  it("CP24 · los textos de registrar son los de design.md §4", () => {
+    expect(textosDe("registrar")).toEqual({
+      titulo: "Create your account",
+      subtitulo: "Start building your Northstar plan in a minute.",
+      boton: "Create account",
+      pieTexto: "Already have an account?",
+      pieEnlace: "Sign in",
+    });
   });
 });

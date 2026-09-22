@@ -136,7 +136,7 @@
 
 ### T4 — Dar modo al estado del panel
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -150,12 +150,19 @@
 
 *Hecho cuando:*
 
-- [ ] CP19–CP22 fallan primero porque `alternarModo` no existe, y después alternan el modo conservando lo escrito y limpiando errores y mensaje
-- [ ] CP24 fija los títulos, botones y enlaces de la tabla de `design.md` §4 para los dos modos
-- [ ] CP18 fija los tres campos nuevos que T4 agrega al tipo `EstadoLogin` (`modo`, `enviando`, `mensaje` — hoy `EstadoLogin` no tiene ninguno de los tres): `LOGIN_INICIAL` queda en modo `entrar`, con `enviando === false` y `mensaje === undefined`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP19–CP22 fallan primero porque `alternarModo` no existe, y después alternan el modo conservando lo escrito y limpiando errores y mensaje
+- [x] CP24 fija los títulos, botones y enlaces de la tabla de `design.md` §4 para los dos modos
+- [x] CP18 fija los tres campos nuevos que T4 agrega al tipo `EstadoLogin` (`modo`, `enviando`, `mensaje` — hoy `EstadoLogin` no tiene ninguno de los tres): `LOGIN_INICIAL` queda en modo `entrar`, con `enviando === false` y `mensaje === undefined`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
+
+- **2026-09-22** — Leído §6: **T3-D1** no condiciona a T4 (esta tarea no llama a `autenticar`), pero sí importa que `ModoAuth` ya exista: `ModoLogin` es un alias y no una unión copiada, así que los dos modos no pueden divergir por descuido.
+- **2026-09-22** — Rojo: 7 casos fallan, 25 existentes siguen en verde. Que los viejos no se movieran es la señal de que agregar los tres campos no rompió nada — REG1 a REG5 se apoyan en ellos.
+- **2026-09-22** — `alternarModo` voltea **sin condición** en esta tarea. La guarda de `enviando` es T8 y se deja afuera a propósito: meterla acá dejaría a T8 sin rojo propio, que es justamente la razón por la que el audit partió la tarea.
+- **2026-09-22** — `textosDe` se implementa como una tabla y no como condicionales en el pintado. Motivo: los cinco textos de los dos modos quedan juntos y comparables de un vistazo, y la diferencia entre modos se prueba sin montar DOM — que es lo que permite que CP24 sea un test unitario y no un E2E.
+- **2026-09-22** — Descubierto: `login.ts` compila sin tocarlo pese a los tres campos nuevos, porque nunca construye un `EstadoLogin` literal — siempre parte de `LOGIN_INICIAL` y esparce. Es suerte de un diseño previo que conviene no gastar: T6 y T9 tienen que seguir sin construir estados a mano.
+- **2026-09-22** — Verde: 6 casos nuevos, `npm test` en 213/213, typecheck limpio.
 
 ### T5 — Envío y mensaje de servidor en el estado del panel
 
