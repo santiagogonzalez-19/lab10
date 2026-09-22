@@ -105,7 +105,7 @@
 
 ### T3 — Emitir el intento y devolver un resultado que no transporta la sesión
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -119,12 +119,20 @@
 
 *Hecho cuando:*
 
-- [ ] CP11–CP17 fallan primero porque `autenticar` no existe; después CP11–CP13 fijan endpoint, método, cabeceras y cuerpo de los dos modos, con el correo recortado y la clave intacta
-- [ ] CP14 comprueba que el resultado de éxito no tiene ninguna propiedad más que `ok` — BR1 sostenida por el tipo — y CP15 comprueba que una respuesta `400` con `invalid_credentials` se traduce a `{ ok: false, codigo: "invalid_credentials" }`
-- [ ] CP16 y CP17 cubren el `fetch` que lanza y la configuración ausente, y ninguna prueba del archivo abre la red; `configuracion()` no tiene CP propio porque NF3 se verifica revisando el árbol versionado (`design.md` §7), no con un test unitario — CP17 la ejercita solo de forma indirecta, inyectando `config: null` en `autenticar` sin invocar `configuracion()`
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] CP11–CP17 fallan primero porque `autenticar` no existe; después CP11–CP13 fijan endpoint, método, cabeceras y cuerpo de los dos modos, con el correo recortado y la clave intacta
+- [x] CP14 comprueba que el resultado de éxito no tiene ninguna propiedad más que `ok` — BR1 sostenida por el tipo — y CP15 comprueba que una respuesta `400` con `invalid_credentials` se traduce a `{ ok: false, codigo: "invalid_credentials" }`
+- [x] CP16 y CP17 cubren el `fetch` que lanza y la configuración ausente, y ninguna prueba del archivo abre la red; `configuracion()` no tiene CP propio porque NF3 se verifica revisando el árbol versionado (`design.md` §7), no con un test unitario — CP17 la ejercita solo de forma indirecta, inyectando `config: null` en `autenticar` sin invocar `configuracion()`
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
+
+- **2026-09-22** — Leído §6 antes de empezar, como manda §1: **T1-D1** fija que la llave es el JWT que `configuracion()` lee de `VITE_SUPABASE_ANON_KEY`, y **T2-D1** fija que un slug desconocido cae en `desconocido`, así que `autenticar` no interpreta nada del cuerpo — delega entero en `codigoDeRespuesta`.
+- **2026-09-22** — Rojo: los 9 casos fallan porque `./autenticar` no existe.
+- **2026-09-22** — Descubierto al escribir CP16: el parseo del cuerpo **no puede compartir el `try` del `fetch`**. Si lo comparte, un `502` con HTML hace que `respuesta.json()` lance dentro del mismo bloque y el resultado sale `sin-red` — el panel diría "Can't reach the server. Is Supabase running?" cuando el servidor contestó perfectamente. `design.md` §6 los separa como R4.2 y R4.4, pero esa separación solo existe si los `try` están separados. Queda un caso de prueba dedicado para que no se vuelvan a juntar.
+- **2026-09-22** — Decisión **T3-D1**: en `Dependencias`, `config` **ausente** significa "leé el entorno" y `config: null` significa "no hay configuración". Se distinguen comparando contra `undefined` y no con `??`, porque `??` colapsaría los dos casos y dejaría a CP17 sin forma de provocar `sin-configurar`. Importa para T5 y T9, que llaman a `autenticar` sin pasar `dependencias` y dependen de que el ausente use el entorno real.
+- **2026-09-22** — Descubierto: `fetch` tomado del global pierde su receptor y el navegador lo rechaza con `Illegal invocation`; se ata con `bind(globalThis)`. Ninguna prueba lo habría detectado, porque ahí el `fetch` entra inyectado y el global no se toca nunca. Es un fallo que solo aparece en el navegador, y por eso queda acá y no en un caso de prueba.
+- **2026-09-22** — `configuracion()` recorta las barras finales de la URL, para que un `VITE_SUPABASE_URL=http://127.0.0.1:54321/` no arme `//auth/v1/…`. Ningún criterio lo pide; es normalización defensiva de una variable que se escribe a mano.
+- **2026-09-22** — Verde: 9 casos nuevos, `npm test` en 206/206, typecheck limpio, sin dependencias nuevas.
 
 ### T4 — Dar modo al estado del panel
 
@@ -315,6 +323,7 @@ REG6 está cubierto por `web/src/rutas.test.ts` y por la prueba de ruteo del E2E
 |---|---|---|---|
 | T1-D1 | T1 | Se usa `ANON_KEY` (el JWT) y no `PUBLISHABLE_KEY` para el header `apikey`, aunque el CLI imprima las dos | 2026-09-22 |
 | T2-D1 | T2 | Un slug explícito que no está en el mapa devuelve `desconocido` sin consultar la heurística de texto | 2026-09-22 |
+| T3-D1 | T3 | En `Dependencias`, `config` ausente usa el entorno y `config: null` fuerza `sin-configurar`: se distingue el ausente del nulo, no se usa `??` | 2026-09-22 |
 
 ## 7. Desvíos del diseño
 
