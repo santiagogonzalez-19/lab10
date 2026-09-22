@@ -196,7 +196,7 @@
 
 ### T6 — Pintar el modo del panel en el DOM
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -210,12 +210,19 @@
 
 *Hecho cuando:*
 
-- [ ] Hoy el enlace del pie (`Create an account`) no tiene manejador — activarlo no hace nada: ese es el rojo a cerrar. Después, `pie` usa `textosDe(estado.modo)` para su texto y su enlace, y el clic en el enlace llama a `cambiar(alternarModo(estado))`
-- [ ] `pintar()` deriva del estado, vía `textosDe(estado.modo)`, el título, el subtítulo, el texto del botón y los dos textos del pie; cambiar de modo actualiza los cinco sin recrear ningún nodo del panel
-- [ ] Con la app corriendo, activar el enlace dos veces a mano muestra `Welcome back` / `Sign in` / `New here?` → `Create your account` / `Create account` / `Already have an account?` → de vuelta, conservando lo escrito en los campos
-- [ ] `npm run typecheck` y `npm test` en verde
+- [x] Hoy el enlace del pie (`Create an account`) no tiene manejador — activarlo no hace nada: ese es el rojo a cerrar. Después, `pie` usa `textosDe(estado.modo)` para su texto y su enlace, y el clic en el enlace llama a `cambiar(alternarModo(estado))`
+- [x] `pintar()` deriva del estado, vía `textosDe(estado.modo)`, el título, el subtítulo, el texto del botón y los dos textos del pie; cambiar de modo actualiza los cinco sin recrear ningún nodo del panel
+- [x] Con la app corriendo, activar el enlace dos veces a mano muestra `Welcome back` / `Sign in` / `New here?` → `Create your account` / `Create account` / `Already have an account?` → de vuelta, conservando lo escrito en los campos
+- [x] `npm run typecheck` y `npm test` en verde
 
 **Bitácora**
+
+- **2026-09-22** — Leído §6: ninguna decisión previa condiciona esta tarea.
+- **2026-09-22** — El título y el subtítulo los construye `panelDeFormulario()`, que devuelve el árbol ya armado y no las hojas. Se resuelven con un `querySelector` **una sola vez** al montar, guardado en una variable; hacerlo dentro de `pintar()` metería una consulta al DOM en cada tecla.
+- **2026-09-22** — El manejador del enlace del pie es una línea y **no** comprueba `enviando`: la guarda vive en `alternarModo` (T8). Que la condición esté en el estado y no en el manejador es lo que evita tener dos versiones de la misma regla, una de las cuales se olvida de actualizar.
+- **2026-09-22** — El MCP de Playwright **no conectó en esta sesión** (`CONNECTION_CLOSED`), así que el check manual del plan se hizo con el mismo motor por script (`@playwright/test` → `chromium.launch()`), no con la extensión de Chrome, que el `CLAUDE.md` prohíbe. Resultado contra la app viva: `Welcome back` / `Sign in` / `New here?` → `Create your account` / `Create account` / `Already have an account?` → de vuelta, con `sofia@correo.com` y la clave intactas en los campos. De paso quedó confirmado en vivo que el botón arranca deshabilitado con los campos vacíos (REG3).
+- **2026-09-22** — Los scripts de verificación se corrieron desde `test-results/`, que ya está en el `.gitignore`, y se borraron al terminar: son andamiaje de una comprobación manual, no tests del repo.
+- **2026-09-22** — Verde: sin casos unitarios nuevos —es DOM, como el plan anticipa—, `npm test` sigue en 228/228 y typecheck limpio.
 
 ### T7 — Repuntar el recorrido E2E existente y el arranque de la suite
 
