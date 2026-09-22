@@ -29,3 +29,12 @@ test-results/
 playwright-report/
 **/test-results/
 **/playwright-report/
+
+# Configuracion local de Vite. La anon key sale de cada `supabase start`; la
+# plantilla versionada es web/.env.example. Vive bajo web/ porque vite.config.ts
+# fija root: "web" y Vite resuelve el envDir contra ese root (T1 del spec
+# 2026-09-22-login-supabase-local).
+.env.local
+**/.env.local
+.env.*.local
+**/.env.*.local
