@@ -49,7 +49,7 @@
 
 ### T1 — Preparar Supabase local y la configuración del proyecto
 
-**Estado:** `Pendiente`
+**Estado:** `Hecha`
 
 **Plan** *(inmutable)*
 
@@ -63,11 +63,17 @@
 
 *Hecho cuando:*
 
-- [ ] `supabase start` levanta y `GET http://127.0.0.1:54321/auth/v1/health` responde `200`; la llave anónima de esa corrida queda en `web/.env.local` — no en la raíz del proyecto, porque `vite.config.ts` fija `root: "web"` y Vite resuelve el `envDir` por defecto contra ese `root`
-- [ ] `web/.env.example` queda versionado con las mismas claves que `web/.env.local`, sin valores reales; `git check-ignore web/.env.local`, corrido desde la raíz del repo (un nivel arriba de `01-mis-finanzas/`), confirma que el `.gitignore` de esa raíz lo ignora
-- [ ] `web/src/vite-env.d.ts` declara exactamente las claves de `web/.env.example` (mismo nombre, mismo conteo) y `npm run typecheck` sigue en verde, sin dependencias nuevas en `package.json`
+- [x] `supabase start` levanta y `GET http://127.0.0.1:54321/auth/v1/health` responde `200`; la llave anónima de esa corrida queda en `web/.env.local` — no en la raíz del proyecto, porque `vite.config.ts` fija `root: "web"` y Vite resuelve el `envDir` por defecto contra ese `root`
+- [x] `web/.env.example` queda versionado con las mismas claves que `web/.env.local`, sin valores reales; `git check-ignore web/.env.local`, corrido desde la raíz del repo (un nivel arriba de `01-mis-finanzas/`), confirma que el `.gitignore` de esa raíz lo ignora
+- [x] `web/src/vite-env.d.ts` declara exactamente las claves de `web/.env.example` (mismo nombre, mismo conteo) y `npm run typecheck` sigue en verde, sin dependencias nuevas en `package.json`
 
 **Bitácora**
+
+- **2026-09-22** — Docker estaba apagado; se levantó y `supabase start` corrió limpio. `auth/v1/health` responde `200`. GoTrue es **v2.196.0** — el dato importa porque D6 se escribió sin saber contra qué versión se iba a mapear.
+- **2026-09-22** — Descubierto: esta versión del CLI imprime **dos** llaves utilizables, `ANON_KEY` (el JWT clásico) y `PUBLISHABLE_KEY` (`sb_publishable_…`). `design.md` asume una sola y la llama "llave anónima". Decisión **T1-D1**: se usa `ANON_KEY`. Alternativa: `PUBLISHABLE_KEY`, el formato nuevo. Criterio: `design.md` §4 nombra la variable `VITE_SUPABASE_ANON_KEY`, y el JWT es el que toda la documentación de GoTrue usa en el header `apikey`; cambiar al formato nuevo sería una decisión de diseño, no de implementación. Se comprobó que el JWT funciona contra los dos endpoints antes de fijarlo.
+- **2026-09-22** — Desvío **DV1**: `design.md` §2 lista `.gitignore` como archivo **Nuevo**, y el Gate 1 afirmó que el repo no tenía uno. Es falso: existe en la raíz del repo git, un nivel arriba de `01-mis-finanzas/`, y ya ignora `node_modules/`, `test-results/` y los worktrees. El error vino de haberlo buscado desde `01-mis-finanzas/`. Se **agregaron** las reglas de `.env.local` al archivo existente en vez de crear uno nuevo. Registrado en §7; `design.md` no se corrige porque el componente "Configuración local" sigue siendo el mismo, solo cambia de `Nuevo` a `Ampliado`.
+- **2026-09-22** — Sondeo del servidor vivo para T2, hecho acá porque el servicio recién levantado era la ocasión: se golpearon los ocho casos de error contra GoTrue y se guardaron las formas reales del cuerpo. El hallazgo que cambia T2 está anotado en su bitácora; adelantarlo evita que T2 escriba el mapeo a ciegas y lo descubra recién en el E2E.
+- **2026-09-22** — Verde: `npm run typecheck` limpio en los dos proyectos y `npm test` en 176/176, los mismos que antes de empezar. `package.json` sin tocar (NF1).
 
 ### T2 — Traducir los fallos de GoTrue a un código y a su mensaje
 
@@ -299,17 +305,15 @@ REG6 está cubierto por `web/src/rutas.test.ts` y por la prueba de ruteo del E2E
 
 ## 6. Registro de decisiones
 
-*(Vacío: solo lo llena la implementación. Una decisión anotada acá antes de tomarse es una conjetura con aspecto de registro.)*
-
 | # | Tarea | Decisión | Fecha |
 |---|---|---|---|
+| T1-D1 | T1 | Se usa `ANON_KEY` (el JWT) y no `PUBLISHABLE_KEY` para el header `apikey`, aunque el CLI imprima las dos | 2026-09-22 |
 
 ## 7. Desvíos del diseño
 
-*(Vacío hasta que la implementación se aparte de `design.md`.)*
-
 | # | Tarea | Qué difiere de design.md | Resolución |
 |---|---|---|---|
+| DV1 | T1 | §2 lista `.gitignore` como archivo **Nuevo**; ya existe en la raíz del repo git, un nivel arriba de `01-mis-finanzas/` | Desvío local, diseño sigue válido: se agregaron las reglas al archivo existente. El componente "Configuración local" pasa de `Nuevo` a `Ampliado` y nada más cambia |
 
 ## 8. Tareas descubiertas durante la implementación
 
