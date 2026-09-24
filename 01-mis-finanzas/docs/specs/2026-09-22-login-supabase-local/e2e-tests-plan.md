@@ -24,22 +24,28 @@ Un hueco que vale nombrar y que **no** se planea porque ningún criterio lo fija
 
 ## 3. Casos
 
-### E1 — Me creo una cuenta y entro — · happy path
+### E1 — Me creo una cuenta, salgo y vuelvo a entrar con ella · happy path
 
-- **Criterios:** R2.1, R1.4, R3.1
-- **Como usuario quiero:** crearme una cuenta desde la misma pantalla de acceso y quedar adentro, sin pasar por ninguna otra página.
+- **Criterios:** R2.1, **R1.1**, R1.4, R3.1
+- **Como usuario quiero:** crearme una cuenta desde la pantalla de acceso y, después, poder volver a entrar con ese mismo correo y esa misma clave. Las dos mitades son el recorrido de una persona real: uno se registra **una vez** y a partir de ahí inicia sesión.
 - **Pasos:**
   1. Abrir `http://localhost:5173/#/login` con el panel recién montado.
   2. Hacer clic en el enlace del pie `Create an account`.
   3. Comprobar que el panel ahora dice `Create your account` y que el botón dice `Create account`.
   4. Escribir un correo nuevo, único de esta corrida, por ejemplo `e2e-1758700000000-483921@example.com`.
   5. Escribir la clave `supersecret123`.
-  6. Hacer clic en el botón de envío.
+  6. Hacer clic en el botón de envío. **Llegar a `#/perfil`** — hasta acá se probó el registro (R2.1).
+  7. Volver al acceso con el panel recién montado —recargando, porque navegar al mismo fragmento no lo remonta— y comprobar que vuelve a decir `Welcome back`, es decir que arranca en modo `entrar`.
+  8. Escribir **el mismo** correo del paso 4 y **la misma** clave del paso 5.
+  9. Hacer clic en el botón de envío, que ahora dice `Sign in`.
 - **Resultado esperado:**
-  - La URL termina en `#/perfil`.
+  - Tras el paso 6 la URL termina en `#/perfil`.
+  - Tras el paso 9 la URL **vuelve a terminar** en `#/perfil`: la cuenta creada en el paso 6 es aceptada por el servidor como credencial válida (R1.1).
   - Se ve el encabezado `Tell us about your finances`, que es el efecto real de haber entrado y no solo el cambio de fragmento.
-  - `localStorage`, `sessionStorage` y las cookies del contexto quedan **vacíos**: la sesión que Supabase devolvió se descartó (R1.4).
-- **Cómo falla:** si el botón navegara sin consultar al servidor, este caso pasaría igual — por eso el aserto de los almacenamientos es el que tiene valor. Si la sesión se persistiera "por conveniencia", aparecería una clave `sb-…-auth-token` en `localStorage` y el caso se pondría rojo. Si el registro no funcionara, quedaría en `#/login` con un mensaje de error.
+  - `localStorage`, `sessionStorage` y las cookies del contexto quedan **vacíos** después del inicio de sesión: la sesión que Supabase devolvió se descartó (R1.4).
+- **Cómo falla:** si el botón navegara sin consultar al servidor, las dos mitades pasarían igual — por eso el valor está en los otros dos asertos. El del paso 9 no puede pasar por casualidad: exige que la cuenta creada en el paso 6 exista de verdad del lado del servidor, así que cubre el `POST /auth/v1/token?grant_type=password` de punta a punta, que es justo lo que ningún unitario puede hacer (CP11 usa un `fetch` falso). Si la sesión se persistiera "por conveniencia", aparecería una clave `sb-…-auth-token` en `localStorage`. Si el inicio de sesión se rompiera —una cabecera mal armada, un endpoint cambiado— el paso 9 quedaría en `#/login` con `That email and password don't match an account.`
+
+> **Por qué E1 encadena las dos mitades.** En la primera versión de este plan E1 terminaba en el paso 6, y con eso **R1.1 se quedaba sin ninguna cobertura E2E**: el único caso que pasaba por el modo `entrar` era E2, que es el que falla a propósito. Una regresión que rompiera el inicio de sesión con credenciales correctas habría dejado la suite entera en verde. Encadenar cubre R1.1 y R2.1 en un solo recorrido y no gasta uno de los tres casos del loop.
 
 ### E2 — Me equivoco de clave y la pantalla me lo dice sin culpar a un campo · error
 
@@ -76,11 +82,13 @@ Un hueco que vale nombrar y que **no** se planea porque ningún criterio lo fija
 
 | Caso | Criterios | Tarea(s) | ¿Cubierto abajo? |
 |---|---|---|---|
-| E1 | R2.1, R1.4, R3.1 | T9, T6, T3 | CP12, CP14, CP27 (unitarios) — pero ninguno afirma que el navegador llegue al servidor ni que el almacenamiento quede limpio |
+| E1 | R2.1, **R1.1**, R1.4, R3.1 | T9, T6, T3 | CP11, CP12, CP14, CP27 (unitarios) — todos con un `fetch` falso, así que ninguno afirma que el servidor real acepte la credencial, ni que el almacenamiento quede limpio |
 | E2 | R1.2, R4.1, R4.6 | T9, T5, T2 | CP1, CP15, CP26, CP31 (unitarios) — ninguno afirma dónde aparece el mensaje en la pantalla |
 | E3 | R2.2, R4.1 | T9, T5, T2 | CP4, CP5, CP26 (unitarios) — ninguno usa el servidor real, que es quien decide el `422` |
 
-Los criterios que **no** toca este plan y siguen cubiertos solo por unitarios: R1.1, R1.3, R2.3, R2.4, R3.2–R3.5, R4.2–R4.5, R4.7, R5.1–R5.4, y todos los `BR#` y `REG#`. Es lo esperado — tres casos son un muestreo de usuario, no la trazabilidad de `tasks.md` §5.
+Los criterios que **no** toca este plan y siguen cubiertos solo por unitarios: R1.3, R2.3, R2.4, R3.2–R3.5, R4.2–R4.5, R4.7, R5.1–R5.4, y todos los `BR#` y `REG#`. Es lo esperado — tres casos son un muestreo de usuario, no la trazabilidad de `tasks.md` §5.
+
+**R1.1 estaba en esa lista y ya no lo está**, y conviene que quede el rastro de por qué: es el criterio central de la feature —entrar con credenciales correctas— y haberlo dejado fuera significaba que ninguna prueba automatizada ejercitaba un inicio de sesión exitoso. El único caso en modo `entrar` era E2, el que falla a propósito. Se cubrió encadenándolo dentro de E1 en vez de gastar un cuarto caso.
 
 ## 5. Selectores conocidos
 

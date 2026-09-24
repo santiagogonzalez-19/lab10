@@ -34,10 +34,16 @@ async function completar(page: Page, correo: string, clave: string): Promise<voi
 }
 
 test.describe("Acceso contra Supabase local", () => {
-  // E1 — Me creo una cuenta y entro · happy path · R2.1, R1.4, R3.1
-  test("me creo una cuenta desde el acceso y quedo adentro sin sesion guardada", async ({
+  // E1 — Me creo una cuenta, salgo y vuelvo a entrar con ella · happy path · R2.1, R1.1, R1.4, R3.1
+  test("me creo una cuenta, vuelvo al acceso y entro con ese mismo correo y esa misma clave", async ({
     page,
   }) => {
+    // Las dos mitades comparten credencial a proposito: el inicio de sesion
+    // solo demuestra algo si la cuenta la creo este mismo recorrido contra el
+    // servidor real. Correo unico porque los tres casos corren en paralelo.
+    const correo = correoUnico("e2e");
+
+    // --- Mitad 1: registrarse (R2.1) ---
     await page.goto("/#/login");
 
     await page.getByRole("button", { name: "Create an account" }).click();
@@ -45,7 +51,7 @@ test.describe("Acceso contra Supabase local", () => {
     await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
     await expect(botonEnviar(page)).toHaveText("Create account");
 
-    await completar(page, correoUnico("e2e"), CLAVE);
+    await completar(page, correo, CLAVE);
     await botonEnviar(page).click();
 
     // El efecto real de haber entrado es la pantalla, no el fragmento: si el
@@ -53,8 +59,33 @@ test.describe("Acceso contra Supabase local", () => {
     await expect(page).toHaveURL(/#\/perfil$/);
     await expect(page.getByRole("heading", { name: "Tell us about your finances" })).toBeVisible();
 
-    // R1.4: la sesion que Supabase devolvio se leyo y se descarto. Persistirla
-    // "por conveniencia" dejaria una clave sb-…-auth-token en localStorage.
+    // --- Mitad 2: volver a entrar con esa cuenta (R1.1) ---
+    // Venimos de #/perfil, asi que ir a #/login cambia el fragmento y eso solo
+    // ya remonta el panel. Lo que NO remonta es navegar al MISMO fragmento que
+    // ya esta en la URL: esa si es una navegacion same-document, y ahi el modo
+    // anterior sobreviviria. Por eso la recarga aca es redundancia barata y no
+    // un requisito. Los dos asertos de modo que siguen son cinturon y
+    // tirantes: si ese comportamiento cambiara, el caso fallaria diciendo que
+    // el panel esta en el modo equivocado, en vez de con el confuso error de
+    // correo ya usado que daria un registro duplicado.
+    await page.goto("/#/login");
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+    await expect(botonEnviar(page)).toHaveText("Sign in");
+
+    await completar(page, correo, CLAVE);
+    await botonEnviar(page).click();
+
+    // El aserto que no puede pasar por casualidad: exige que la cuenta creada
+    // arriba exista del lado del servidor, o sea el POST de token de punta a
+    // punta. Si el inicio de sesion se rompiera, aca quedaria en #/login con
+    // "That email and password don't match an account."
+    await expect(page).toHaveURL(/#\/perfil$/);
+    await expect(page.getByRole("heading", { name: "Tell us about your finances" })).toBeVisible();
+
+    // R1.4, medido DESPUES del inicio de sesion: la sesion que Supabase
+    // devolvio se leyo y se descarto. Persistirla "por conveniencia" dejaria
+    // una clave sb-…-auth-token en localStorage.
     const almacenamientos = await page.evaluate(() => ({
       local: Object.keys(localStorage),
       session: Object.keys(sessionStorage),
@@ -101,9 +132,11 @@ test.describe("Acceso contra Supabase local", () => {
     await botonEnviar(page).click();
     await expect(page).toHaveURL(/#\/perfil$/);
 
-    // Volver al acceso y RECARGAR: navegar al mismo fragmento es una
-    // navegacion same-document que no remonta el panel, y el modo del paso
-    // anterior sobreviviria. La recarga garantiza el panel recien montado.
+    // Volver al acceso desde #/perfil cambia el fragmento, y eso solo ya
+    // remonta el panel; navegar al MISMO fragmento que ya esta en la URL es lo
+    // que no lo remonta —navegacion same-document— y dejaria vivo el modo
+    // anterior. La recarga es redundancia barata, y el aserto del titulo es la
+    // guarda de verdad: fija que el panel arranca en modo entrar.
     await page.goto("/#/login");
     await page.reload();
     await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
